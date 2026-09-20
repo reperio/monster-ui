@@ -1,0 +1,168 @@
+.callflows-port #directory-form #basic #tab_users  {
+	color: #303039;
+	margin: 20px 0 0;
+	width: 495px;
+	max-height: 342px;
+}
+
+.callflows-port #directory-form #basic #tab_users .rows {
+	max-height: 310px;
+	overflow: auto;
+}
+
+.callflows-port #directory-form #basic #tab_users .action_user {
+	color: #303039;
+	cursor: pointer;
+	text-decoration: underline;
+	line-height: 32px;
+}
+
+.callflows-port #directory-form #basic #tab_users .action_user:not(:first-child) {
+	margin-left: 10px;
+}
+
+.callflows-port #directory-form #basic #tab_users .action_user:hover {
+	color: #05addc;
+}
+
+.callflows-port #directory-form #basic #tab_users .action_user.fa {
+	font-size: 21px;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.first:not(:last-child) {
+	border-right: 1px solid #A6A6A6;
+}
+
+.callflows-port #directory-form #basic #tab_users .column {
+	float: left;
+	text-align: center;
+	height: 32px;
+	line-height: 32px;
+}
+
+.callflows-port #directory-form #basic #tab_users .column i.fa {
+	margin-right: 5px;
+	color: #303039;
+}
+
+.callflows-port #directory-form #basic #tab_users .column .action_user {
+	text-decoration: none;
+}
+
+.callflows-port #directory-form #basic #tab_users select {
+	height: 22px;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.first {
+	width: 260px;
+	overflow: hidden;
+	text-align:center;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.third {
+	width: 69px;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.second {
+	min-width: 159px;
+	border-right: 1px solid #A6A6A6;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.second select {
+	margin: 5px 0 0;
+	vertical-align: top;
+	max-width: 140px;
+	padding: 0;
+}
+
+.callflows-port #directory-form #basic #tab_users .column.merged {
+	width: 480px;
+}
+
+.callflows-port #directory-form #basic #tab_users .row-user {
+	height: 32px;
+	margin-left: 0;
+}
+
+.callflows-port #directory-form #basic #tab_users .row-user.title {
+	background-color: #D9D9D9 !important;
+	border-bottom: 1px solid #A6A6A6 !important;
+	font-weight: bold;
+}
+
+.callflows-port #directory-form #basic #tab_users .row-user:not(:last-child) {
+	border-bottom: 1px solid #A6A6A6;
+}
+
+.callflows-port #directory-form #basic #tab_users .row-user:nth-child(odd) {
+	background-color: #eee;
+}
+
+.callflows-port #directory-form #basic #tab_users .row-user:nth-child(even) {
+	background-color: #eee;
+}
+
+.callflows-port #directory-form #basic .add_user {
+	background: #22A5FF;
+	display: inline-block;
+	vertical-align: top;
+	min-width: 495px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_content_wrapper {
+	background: #EEEEEE;
+	padding: 12px 15px 20px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_title {
+	color: #eeeeee;
+	font-weight: bold;
+	height: 25px;
+	line-height: 25px;
+	text-align: center;
+	border-radius: 10px 10px 0 0;
+}
+
+.callflows-port #directory-form #basic .add_user select {
+	width: 180px;
+	margin: 2px 6px 5px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_fields {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_fields .user-item-wrapper,
+.callflows-port #directory-form #basic .add_user .add_user_fields .callflow-item-wrapper {
+	display: inline-block;
+	vertical-align: top;
+	width: 190px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_fields .tooltip-wrapper {
+	margin-left: 0px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_fields ul {
+	list-style-type: none;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_div {
+	display: inline-block;
+	vertical-align: top;
+	margin: 24px 0 0 6px;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_div a {
+	color: #333333;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_div:hover a {
+	color: #05addc;
+}
+
+.callflows-port #directory-form #basic .add_user .add_user_div:hover .add_user_icon {
+	background-position: 0 -24px;
+	cursor: pointer;
+}

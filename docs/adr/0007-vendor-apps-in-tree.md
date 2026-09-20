@@ -55,3 +55,13 @@ git history is not preserved; this list is the record.
   standalone-repo infra dropped (`.circleci/`, `.shipyard.yml`, `.base_branch`, `.gitattributes`,
   `.gitignore`, `LICENSE`); `api_url` scrubbed `http://10.26.0.41:8000/v2` →
   `http://localhost:8000/v2`.
+- **`callflows`** — `kazoo-classic/monster-ui-callflows-ng@e231afb16b6131f48f12c05498fe3656df764379`
+  (`master` tip, 2025-11-25). App source taken from that repo's `src/apps/callflows/`; standalone-repo
+  infra dropped (root `LICENSE` + `.editorconfig`, in-app `LICENSE` + `.gitattributes`); `api_url`
+  scrubbed `http://10.26.0.41:8000/v2` → `http://localhost:8000/v2`. Unlike the Apps above, this App
+  carries a framework-level third-party dependency, `bootstrap-tour` (v0.12.0, used by its guide
+  tour). Vendoring it therefore also *grew the shared vendor set*: `bootstrap-tour.min.js` was added
+  to `src/js/vendor/` and registered in `src/js/main.js` (`'bootstraptour'` path), and
+  `bootstrap-tour.css` was added to `src/css/vendor/` and imported from `src/css/style.css`. This is
+  consistent with the framework model — Apps consume from the parent's shared vendor set — but where
+  `accounts` and `voip` found their dependencies already present, `callflows` had to add one.
