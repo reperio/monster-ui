@@ -65,3 +65,19 @@ git history is not preserved; this list is the record.
   `bootstrap-tour.css` was added to `src/css/vendor/` and imported from `src/css/style.css`. This is
   consistent with the framework model — Apps consume from the parent's shared vendor set — but where
   `accounts` and `voip` found their dependencies already present, `callflows` had to add one.
+- **`apiexplorer`** (display label **API Explorer**) —
+  `kazoo-classic/monster-ui-apiexplorer@2f03c516bfc6e9fb7c3bfd27f027bdb1d5b138df` (`master` tip,
+  2025-11-24). Unlike the Apps above, upstream ships its source at the *repo root* (no `src/apps/`
+  nesting), so the root contents were copied into `src/apps/apiexplorer/`. Standalone-repo infra
+  dropped: only a redundant root `LICENSE` was present. No `api_url` scrub was needed — it is the
+  empty string `""` upstream (no hardcoded IP anywhere). Like `callflows`, this App carries a
+  framework-level third-party dependency, `highlight.js` (used to syntax-highlight JSON responses),
+  which was not in the shared vendor set; its engine was therefore *added* to the set as
+  `src/js/vendor/highlight.pack.js` and registered in `src/js/main.js` (`'hljs'` path). Unlike
+  `bootstrap-tour`, no shared CSS wiring was needed: the `xcode` highlight theme is loaded
+  app-locally through the App's own `css: ['app','xcode']` array (`style/xcode.css`). Its other
+  library, `clipboard.js`, was already in the shared set (v1.5.15, API-compatible with the v1.5.9
+  the App bundled — both use the `new Clipboard()` constructor). The App shipped its own copies of
+  `highlight.pack.js` and `clipboard.min.js` under `lib/`; both became redundant once resolved
+  against the shared set and were dropped, leaving only the live `lib/kazoo.methods.js` (loaded at
+  runtime via `$.ajax`).

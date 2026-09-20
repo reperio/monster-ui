@@ -1,0 +1,17 @@
+{
+	"main": {
+		"main_block": "API",
+		"search_block": "Chercher",
+		"request": "Essayer",
+		"invalid_form": "Forme est invalide!",
+		"show_all": "Montre Tout",
+		"animation": "Animation",
+		"title_config": "Options",
+		"save_config": "Enregistrer",
+		"query_param": "Paramètre query"
+	},
+	"apiexplorer": {
+		"nextRequestBtnText": "Envoyer suivant",
+		"sendFirstRequestBtnText": "Envoyer la première demande"
+	}
+}
