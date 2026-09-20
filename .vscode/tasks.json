@@ -1,0 +1,44 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "npm install",
+			"detail": "Install dependencies with node 14 (node-sass ^8 needs node >=14)",
+			"type": "shell",
+			"command": "npm install",
+			"options": {
+				"env": {
+					"PATH": "${env:HOME}/.nvm/versions/node/v14.21.3/bin:${env:PATH}"
+				}
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "gulp (dev server)",
+			"detail": "Install deps, build Monster UI, and serve it at http://localhost:3000/ (node 14)",
+			"type": "shell",
+			"command": "gulp",
+			"options": {
+				"env": {
+					"PATH": "${env:HOME}/.nvm/versions/node/v14.21.3/bin:${env:PATH}"
+				}
+			},
+			"dependsOn": ["npm install"],
+			"dependsOrder": "sequence",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}

@@ -1,0 +1,18 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "gulp (dev server, node 14)",
+			// runtimeVersion resolves against nvm-installed node; requires
+			// `nvm install 14.21.3` (matches .nvmrc). Governs the launched
+			// program only, so the preLaunchTask below is pinned to node 14 too.
+			"runtimeVersion": "14.21.3",
+			"program": "${workspaceFolder}/node_modules/gulp/bin/gulp.js",
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+			"preLaunchTask": "npm install"
+		}
+	]
+}

@@ -78,6 +78,13 @@ The server-side REST API of Kazoo that the Kazoo SDK talks to. Names the endpoin
 client.
 _Avoid_: the API, backend, REST layer
 
+**API root**:
+The base URL every Request is resolved against (`config.api.default`, or an App's own
+`apiUrl`), onto which a Request's path is appended. It always ends with the Crossbar API
+version segment — `.../v2/` — so a Request resolves to a versioned Crossbar endpoint rather
+than a bare, un-versioned path.
+_Avoid_: base URL, api.default, host
+
 **Flags**:
 The per-App values and helpers exposed on `self` at runtime — `accountId`, `userId`,
 `apiUrl`, `i18n`, and similar — that carry the current session's context into an App.

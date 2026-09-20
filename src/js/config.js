@@ -13,6 +13,9 @@
  * https://docs.2600hz.com/ui/docs/configuration/
  */
 define({
+	api: {
+		'default': 'http://localhost:8000/v2/'
+	},
 	whitelabel: {
 		companyName: '2600Hz',
 		applicationTitle: 'Monster UI',
