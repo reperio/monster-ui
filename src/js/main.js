@@ -27,6 +27,7 @@ require.config({
 		'form2object': 'js/vendor/form2object',
 		'handlebars': 'js/vendor/handlebars-v4.7.7',
 		'hasher': 'js/vendor/hasher.min',
+		'hljs': 'js/vendor/highlight.pack',
 		'hotkeys': 'js/vendor/jquery.hotkeys.min',
 		'image-select': 'js/vendor/ImageSelect.jquery',
 		'introJs': 'js/vendor/intro.min',

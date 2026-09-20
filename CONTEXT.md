@@ -43,6 +43,14 @@ the loader uses); *SmartPBX* is only the marketing label shown in the Apploader 
 _voip_ when naming the App as a unit of code; use _SmartPBX_ only for what the end user sees.
 _Avoid_: using "SmartPBX" as the App's code identity, or "voip" in user-facing copy
 
+**API Explorer**:
+The in-UI developer tool (the **apiexplorer** App) for issuing arbitrary **Crossbar API**
+requests and inspecting their raw responses — a hands-on way to explore Kazoo's REST endpoints
+from within the UI. The App's identity in code and on disk is `apiexplorer`; *API Explorer* is
+its display label. Name the tool for what it *does* (explore the Crossbar API); it is not itself
+the API, nor the **Kazoo SDK** that other Apps use to reach it.
+_Avoid_: using "API Explorer" for the Crossbar API itself or the Kazoo SDK; "api explorer" as an App code identity
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
