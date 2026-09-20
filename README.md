@@ -68,11 +68,7 @@ If you are using Docker containers, we made it easy for you to set up a developm
 
 This script will install `npm` and `gulp`, as well as the `npm` dependencies and finally run the `gulp` command. You will be able to access the development environment at `http://localhost:3000/`.
 
-It also starts by pulling your apps installed in `src/apps` before starting the server. To disable this behavior use the `no-update` flag:
-
-```shell
-./serve.sh no-update
-```
+Apps live in-tree under `src/apps/` and are built directly from this repository — there is no separate per-app clone or pull step.
 
 ## Running the tests
 
