@@ -1,0 +1,82 @@
+{
+	"menu": {
+		"recordings": "Enregistrements",
+		"settings": "Paramètres",
+		"account": "Compte",
+		"users": "Utilisateurs",
+		"devices": "Appareils"
+	},
+	"dateRangePresets": {
+		"label": "Période",
+		"custom": "Période personnalisée",
+		"last7Days": "7 derniers jours",
+		"last30Days": "30 derniers jours",
+		"last90Days": "90 derniers jours",
+		"last6Months": "6 derniers mois",
+		"lastYear": "12 derniers mois"
+	},
+	"startDate": "Date de début",
+	"endDate": "Date de fin",
+	"filter": "Filtrer",
+	"close": "Fermer",
+	"currentlyViewing": "Affichage actuel",
+	"allUsers": "Tous les utilisateurs",
+	"total": "Total",
+	"selectRecordings": {
+		"tooltip": "Sélectionner des enregistrements",
+		"all": "Tout",
+		"none": "Aucun"
+	},
+	"deleteSelected": "Supprimer la sélection",
+	"confirmDeleteSelected": "Êtes-vous sûr de vouloir supprimer les enregistrements sélectionnés ?",
+	"recordingsTable": {
+		"direction": "Sens",
+		"from": "De",
+		"targetNumber": "Numéro cible",
+		"startTime": "Heure de début",
+		"duration": "Durée"
+	},
+	"direction": {
+		"inbound": "Entrant",
+		"outbound": "Sortant"
+	},
+	"accountSettings": {
+		"externalCalls": "Appels externes",
+		"internalCalls": "Appels internes",
+		"inboundExternal": "Entrant externe",
+		"outboundExternal": "Sortant externe",
+		"inboundInternal": "Entrant interne",
+		"outboundInternal": "Sortant interne",
+		"recordingEmails": "Envoi des enregistrements par e-mail",
+		"emailRecordings": "Envoyer les nouveaux enregistrements par e-mail",
+		"emailAddress": "Adresse destinataire",
+		"save": "Enregistrer"
+	},
+	"endpointSettings": {
+		"name": "Nom",
+		"username": "Nom d'utilisateur",
+		"type": "Type",
+		"inboundExternal": "Entrant externe",
+		"outboundExternal": "Sortant externe",
+		"inboundInternal": "Entrant interne",
+		"outboundInternal": "Sortant interne"
+	},
+	"toasts": {
+		"accountSettingsSaved": "Paramètres d'enregistrement des appels du compte enregistrés !",
+		"settingsSaved": "Paramètres d'enregistrement des appels enregistrés !",
+		"recordingDeleted": "Enregistrement supprimé !",
+		"recordingsDeleted": "Enregistrements supprimés !"
+	},
+	"errors": {
+		"getAccount": "Problème lors de la récupération des données du compte : ",
+		"updateAccount": "Problème lors de la mise à jour des données du compte : ",
+		"getWebhook": "Problème lors de la récupération du webhook : ",
+		"updateWebhook": "Problème lors de la mise à jour du webhook e-mail : ",
+		"getUsers": "Problème lors de la récupération des utilisateurs",
+		"getDevices": "Problème lors de la récupération des appareils",
+		"updateUser": "Problème lors de la mise à jour de l'utilisateur",
+		"updateDevice": "Problème lors de la mise à jour de l'appareil",
+		"deleteRecording": "Problème lors de la suppression de l'enregistrement"
+	},
+	"confirmDeleteRecording": "Êtes-vous sûr de vouloir supprimer cet enregistrement ?"
+}

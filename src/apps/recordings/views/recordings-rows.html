@@ -1,0 +1,36 @@
+{{#each recordings}}
+<tr class="recording-row" data-call-id="{{call_id}}" data-recording-id="{{media_id}}">
+    <td style="width:20px;" class="select-cell">
+        {{#monsterCheckbox}}
+        <input class="select-recording" type="checkbox" data-recording-id="{{media_id}}"/>
+        {{/monsterCheckbox}}
+    </td>
+    <td>
+        {{#compare direction "===" "outbound"}}
+        {{telicon "phone-outbound"}} {{i18n.direction.outbound}}
+        {{else}}
+        {{telicon "phone-inbound"}} {{i18n.direction.inbound}}
+        {{/compare}}
+    </td>
+    <td>{{caller_id_name}}</td>
+    <td>
+        <div class="top-line">{{#monsterNumberWrapper callee_id_number}}{{/monsterNumberWrapper}}</div>
+        {{#if callee_id_name}}
+        <div class="bottom-line">{{callee_id_name}}</div>
+        {{/if}}
+    </td>
+    <td class="select-line no-padding" data-filter-value="{{timestamp}} {{datetime}}"
+        data-sort-value="{{timestamp}}">
+        <div class="top-line">{{date}}</div>
+        <div class="bottom-line">{{time}}</div>
+    </td>
+    <td class="duration">{{duration}}</td>
+    <td class="actions">
+        <i class="fa fa-play-circle action-item play-recording"></i>
+        <a class="action-item" href="{{uri}}" target="_blank">
+            <i class="fa fa-download download-recording"></i>
+        </a>
+        <i class="fa fa-trash action-item delete-recording"></i>
+    </td>
+</tr>
+{{/each}}
