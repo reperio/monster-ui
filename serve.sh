@@ -1,18 +1,7 @@
 #!/bin/bash
 
-if [[ "$1" != 'no-update' ]]; then
-    pushd src/apps
-    for app in ./*/; do
-        pushd "$app"
-        gu="$(git config --get remote.origin.url)"
-        if [[ 'git@github.com:2600hz/monster-ui.git' != "$gu" ]]; then
-            echo Pulling from "$gu"
-            git pull
-        fi
-        popd
-    done
-    popd
-fi
+# Apps are vendored in-tree under src/apps/; there is no separate per-app repo
+# to pull before serving. See docs/adr/0007-vendor-apps-in-tree.md.
 
 docker run --rm -it \
        --net=host \

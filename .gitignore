@@ -1,16 +1,4 @@
 
-# Monster UI none core apps
-src/apps/*
-!src/apps/apploader/
-!src/apps/appstore/
-!src/apps/auth/
-!src/apps/common/
-!src/apps/core/
-!src/apps/demo_done/
-!src/apps/myaccount/
-!src/apps/skeleton/
-!src/apps/tutorial/
-
 # Build directories
 dist*/
 tmp/
