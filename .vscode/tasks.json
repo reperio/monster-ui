@@ -2,10 +2,23 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "npm install",
+			"detail": "Install dependencies before building",
+			"type": "shell",
+			"command": "npm install",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": []
+		},
+		{
 			"label": "gulp (dev server)",
-			"detail": "Build Monster UI and serve it at http://localhost:3000/",
+			"detail": "Install deps, build Monster UI, and serve it at http://localhost:3000/",
 			"type": "shell",
 			"command": "gulp",
+			"dependsOn": ["npm install"],
+			"dependsOrder": "sequence",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
