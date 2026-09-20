@@ -4,6 +4,7 @@ require.config({
 	paths: {
 		'async': 'js/vendor/async.min',
 		'bootstrap': 'js/vendor/bootstrap-2.3.1.min',
+		'bootstraptour': 'js/vendor/bootstrap-tour.min',
 		'braintree-client': 'js/vendor/braintree.client.min',
 		'braintree-hosted-fields': 'js/vendor/braintree.hosted-fields.min',
 		'braintree-us-bank-account': 'js/vendor/braintree.us-bank-account.min',

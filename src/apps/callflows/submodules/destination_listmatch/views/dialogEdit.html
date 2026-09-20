@@ -1,0 +1,27 @@
+<div class="dialog_popup callflows-port destination-list-match-dialog">
+	<form method="post" action="#" class="destination-list-match-form">
+		<div class="form_content">
+
+			<div class="popup_field clear">
+				<label for="destination-list-match_id">
+					{{ i18n.callflows.destination_list_match.edit_dialog.id }}
+				</label>
+				<div class="select_wrapper">
+					<select name="id" id="destination-list-match_id">
+						{{#select listId}}
+							{{#each lists}}
+								<option value="{{ this.id }}">{{ this.name }} ({{ this.id }})</option>
+							{{/each}}
+						{{/select}}
+					</select>
+				</div>
+			</div>
+		</div>
+	</form>
+
+	<div class="buttons-center">
+		<button class="monster-button monster-button-primary js-save">
+			{{ i18n.save }}
+		</button>
+	</div>
+</div>

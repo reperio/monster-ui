@@ -1,0 +1,9 @@
+<div class="number-wrapper" data-number="{{value.number}}" data-listid="{{key}}" data-state="{{state}}" id="{{id}}" {{#compare state '==' 'pending-add'}}style='background-color: #09A74B;'{{/compare}}>
+	{{value.number}}
+	
+	<div class="actions-number pull-right">
+		<a class="delete-number" href="javascript:void(0);">
+			<i class="fa fa-trash-o"></i>
+		</a>
+	</div>
+</div>

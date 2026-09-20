@@ -140,3 +140,12 @@ _Avoid_: branding, theme, customization
 **Reseller**:
 An Account that resells service to descendant Accounts and owns their Whitelabel configuration.
 _Avoid_: partner, distributor, agency
+
+### Call handling
+
+**Callflow**:
+A Kazoo document describing the chain of actions a call traverses — menus/IVRs, ring
+groups, voicemail, time-of-day routing, feature codes, and the like — keyed to the numbers
+and extensions that trigger it. The routed flow itself, a server-side entity. Distinct from
+the `callflows` App, which is the UI that builds and edits Callflows.
+_Avoid_: call flow, route, dialplan, using "callflows" (the App) for the flow it edits

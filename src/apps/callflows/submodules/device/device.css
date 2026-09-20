@@ -1,0 +1,97 @@
+/**************************
+----TOP TABS MEDIA---------
+****************************/
+.callflows-port .media_tabs {
+	position:relative;
+	overflow-x: auto;
+	background: #eee;
+	border: none;
+	height: auto;
+	min-height: 0;
+	padding: 10px 10px 5px;
+}
+
+.callflows-port .media_tabs .buttons {
+	width: 145px;
+	height: 50px;
+	line-height: 50px;
+	display: inline-block;
+	position: relative;
+	margin: 0 10px 10px 0;
+	padding-left: 20px;
+	text-align: left;
+	-moz-border-radius: 12px;
+	-webkit-border-radius: 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.5;
+	background: #22A5FF;
+}
+
+.callflows-port .media_tabs .buttons:hover {
+	-moz-box-shadow: 3px 5px 10px #383838;
+	-webkit-box-shadow: 3px 5px 10px #383838;
+	box-shadow: 3px 5px 10px #383838;
+	opacity: 1;
+}
+
+.callflows-port .media_tabs .buttons.current,
+.callflows-port .media_tabs .buttons.current:hover {
+	-moz-box-shadow: 3px 5px 10px #383838;
+	-webkit-box-shadow: 3px 5px 10px #383838;
+	box-shadow: 3px 5px 10px #383838;
+	opacity: 1;
+}
+
+.callflows-port .media_tabs .buttons .fa {
+	margin-right: 10px;
+	color: white;
+	font-size: 24px;
+	vertical-align: -3px;
+}
+
+.callflows-port .media_tabs .buttons .fa-mobile {
+	font-size: 30px;
+	vertical-align: -4px;
+}
+
+.callflows-port .media_tabs .buttons .label_device {
+	font-size: 16px;
+	text-transform: uppercase;
+	color: white;
+}
+
+.callflows-port #device-view .realm_label {
+	line-height: 22px;
+}
+
+.callflows-port .media_pane {
+	margin-left: 0;
+	margin-top: 30px;
+}
+
+.callflows-port #device-form .provisioner select {
+	width: 100px;
+	margin-left: 10px;
+}
+
+.callflows-port #device-form .provisioner {
+	display: inline-block;
+	margin-left: 22px;
+}
+
+.callflows-port .input .text {
+	display: inline-block;
+	width: 210px;
+	height: 20px;
+	margin-bottom: 10px;
+	padding: 4px 6px;
+}
+
+.callflows-port #device-form .shoutcast-div {
+	display: none;
+}
+
+.callflows-port #device-form .shoutcast-div.active {
+	display: block;
+}
