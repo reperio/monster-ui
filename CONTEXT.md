@@ -62,6 +62,16 @@ build.
 _Avoid_: "recordings-community" as the App's code identity; "Recordings" for the Callflow-level
 call-recording action or the raw Crossbar recordings endpoint
 
+**Callcenter**:
+The App for administering Kazoo's **ACDC** call center — creating and configuring **Queues**,
+assigning **Agents**, watching the queues/calls/agents dashboards, and eavesdropping on live
+queue calls. The App's identity in code and on disk is `callcenter`; *Callcenter* is its display
+label. It is a community App (third-party, no declared license) vendored in-tree. Distinct from
+the `callflows` App: a Callflow routes an individual call, whereas Callcenter manages the queues
+and agents that a Callflow can hand a call off to.
+_Avoid_: "call center" as the App's code identity; using "Callcenter" for the ACDC subsystem
+itself (that is **ACDC**) or for a single **Queue**
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -168,3 +178,22 @@ groups, voicemail, time-of-day routing, feature codes, and the like — keyed to
 and extensions that trigger it. The routed flow itself, a server-side entity. Distinct from
 the `callflows` App, which is the UI that builds and edits Callflows.
 _Avoid_: call flow, route, dialplan, using "callflows" (the App) for the flow it edits
+
+**ACDC**:
+Kazoo's Automatic Call Distribution Center — the server-side subsystem that holds callers in
+**Queues** and distributes them to available **Agents**. The domain the `callcenter` App
+administers. A call reaches ACDC because a **Callflow** routes it there; ACDC then handles the
+queuing and agent assignment.
+_Avoid_: call center (the concept vs. the App), ACD, using "ACDC" for the `callcenter` App
+
+**Queue**:
+An ACDC waiting line that holds inbound callers until an **Agent** is available, with its own
+strategy, ring settings, and connection timers. A server-side entity keyed to the Callflow that
+feeds it; configured through the `callcenter` App.
+_Avoid_: ring group (a Callflow action, not an ACDC Queue), line, hold
+
+**Agent**:
+A user enrolled in one or more ACDC **Queues** to receive their calls, with a login/pause status
+(available, busy, logged out) surfaced on the `callcenter` agents dashboard. An ACDC role a user
+takes on, not a distinct kind of Account or User.
+_Avoid_: operator, representative, using "Agent" for an arbitrary User or device
