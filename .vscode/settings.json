@@ -1,0 +1,24 @@
+{
+	// Run the integrated terminal as a login shell so nvm is sourced and the
+	// repo's .nvmrc (node 14.21.3) is picked up. Run `nvm use` in a new terminal
+	// if your shell does not auto-switch on directory change.
+	"terminal.integrated.defaultProfile.osx": "zsh-login",
+	"terminal.integrated.profiles.osx": {
+		"zsh-login": {
+			"path": "zsh",
+			"args": ["-l"]
+		}
+	},
+	"terminal.integrated.defaultProfile.linux": "bash-login",
+	"terminal.integrated.profiles.linux": {
+		"bash-login": {
+			"path": "bash",
+			"args": ["-l"]
+		}
+	},
+	// Lint on save using the repo's ESLint config.
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	},
+	"eslint.validate": ["javascript"]
+}

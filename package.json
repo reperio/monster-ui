@@ -3,6 +3,9 @@
   "version": "4.3.0",
   "description": "Monster-UI",
   "main": "index.js",
+  "engines": {
+    "node": ">=14"
+  },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
     "test": "echo \"Error: no test specified\" && exit 1"
