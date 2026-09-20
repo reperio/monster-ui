@@ -14,7 +14,8 @@
  */
 define({
 	api: {
-		'default': 'http://localhost:8000/v2/'
+		'default': 'http://localhost:8000/v2/',
+		'socket': 'ws://localhost:5555'
 	},
 	whitelabel: {
 		companyName: '2600Hz',
