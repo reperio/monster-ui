@@ -81,3 +81,34 @@ git history is not preserved; this list is the record.
   `highlight.pack.js` and `clipboard.min.js` under `lib/`; both became redundant once resolved
   against the shared set and were dropped, leaving only the live `lib/kazoo.methods.js` (loaded at
   runtime via `$.ajax`).
+- **`recordings`** (display label **Recordings**) —
+  `bpbp-boop/monster-ui-recordings-community@f10fb724c4f97a69743d2de31048cba028f713ab`
+  (`main` tip, 2026-09-10). Unlike the Apps above this is a **community App** (author Boden
+  Garman), not a 2600Hz/kazoo-classic upstream, and it ships **no declared license** — its
+  `metadata/app.json` `license` is `"-"` and the repo carries no `LICENSE` file. Like
+  `apiexplorer`, upstream ships its source at the *repo root* (no `src/apps/` nesting), so the
+  root contents were copied into `src/apps/recordings/`. Standalone-repo infra dropped:
+  `.gitignore` and `app-build-config.json`; the README was rewritten to the vendored form. No
+  `api_url` scrub was needed — it is the empty string `""` upstream. It carries **no
+  framework-level third-party dependency**: it builds only against the shared set (`jquery`,
+  `lodash`, `monster`) and the `monster.ui.footable` helper, so the shared vendor set was left
+  unchanged. Two deliberate departures from a byte-faithful copy:
+  - **Renamed the App identity** from upstream `recordings-community` to `recordings`. The
+    directory, the `name` (`app.js` + `app.json`), the derived `#<name>_app_container` selector,
+    the request-key namespace (`recordings-community.*` → `recordings.*`), and the email-webhook
+    identifier (`recordings-community-email` → `recordings-email`) were all swept accordingly.
+    Only the user-facing display label diverges from a pure shortening: it was set to
+    **`Recordings`** (upstream `Recordings (Community)`).
+  - **Fixed one inline bug**: the recordings-list request selected the key `recordings.list`
+    (undefined) on the no-user branch; corrected to the defined `recordings.recordings.list`.
+  The `emailWebhook` config left its upstream `CHANGE-ME` placeholders (`receiverUri`, `token`)
+  in place — they are already safe placeholders, analogous to the `api_url` scrub.
+- **`recordings` `receiver/` scope call** — this App is the first vendored one to carry
+  *server-side* code: `receiver/` is a standalone Python webhook service (plus a systemd unit
+  and config example) that powers the email-a-recording feature. Per this ADR, installing an App
+  server-side is a deploy-time concern outside this repository, so this is **out-of-band
+  infrastructure, not part of the monster-ui build** — nothing in the gulp bundle references it
+  and `getAppsToInclude()` does not sweep it into the build. It is vendored in place under
+  `src/apps/recordings/receiver/` regardless, because this repo is now its sole home and the
+  App's email feature is inert without it; dropping it would silently discard the only copy of a
+  working feature's backend. It is marked as such in the App's `README.md`.

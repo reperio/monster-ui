@@ -1,0 +1,164 @@
+/* Main header: user selector + total count */
+.recordings-container .main-header {
+    margin-bottom: 25px;
+}
+
+.recordings-container .main-header > * {
+    display: inline-block;
+    margin-right: 25px;
+    vertical-align: top;
+}
+
+.recordings-container .main-header .select-header {
+    color: #606069;
+    margin-bottom: 5px;
+}
+
+.recordings-container .main-header .user-selector,
+.recordings-container .main-header .chosen-drop,
+.recordings-container .main-header .chosen-container {
+    width: 300px !important;
+}
+
+.recordings-container .main-header .chosen-container > a {
+    height: 40px;
+    line-height: 40px;
+}
+
+.recordings-container .main-header .user-selector .chosen-container .chosen-single span {
+    font-size: 18px;
+}
+
+.recordings-container .main-header .counts-wrapper {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    margin-top: 24px;
+}
+
+.recordings-container .main-header .counts-wrapper .count-wrapper {
+    color: #606069;
+    display: inline-block;
+    height: 26px;
+    padding: 5px 10px;
+    text-align: center;
+    min-width: 65px;
+}
+
+.recordings-container .main-header .counts-wrapper .count-wrapper .count-text {
+    font-size: 24px;
+    color: #333;
+    padding-left: 7px;
+}
+
+/* Action bar: selection controls */
+.recordings-container .action-bar .basic-actions {
+    line-height: 30px;
+}
+
+.recordings-container .action-bar .margin-left {
+    margin-left: 10px;
+}
+
+.recordings-container .action-bar .hidable {
+    display: inline-block;
+}
+
+.recordings-container .action-bar .hidable.hidden {
+    display: none;
+}
+
+.recordings-container .recordings-table .select-cell {
+    min-width: 20px !important;
+}
+
+.recordings-container .filter-by-date .date-ranges>* {
+    margin: 0 10px 0 0;
+    vertical-align: middle;
+}
+
+.recordings-container .filter-by-date .date-ranges>span {
+    margin-right: 5px;
+}
+
+.recordings-container .filter-by-date .date-ranges input.date-filter {
+    height: 24px;
+    width: 90px;
+}
+
+.recordings-container .filter-by-date .date-ranges i.fa-calendar {
+    margin-left: -30px;
+    margin-right: 20px;
+}
+
+.recordings-container .filter-by-date {
+    line-height: 30px;
+    margin-left: 30px;
+}
+
+.recordings-container .filter-by-date .date-ranges input.date-filter {
+    height: 24px;
+    width: 90px;
+}
+
+/* .recordings-container .filter-by-date .date-ranges,
+.recordings-container .filter-by-date.active .expand-dates {
+    display: none;
+} */
+
+.recordings-container .filter-by-date.active .date-ranges {
+    display: block;
+}
+
+.recordings-container .loading-state {
+    display: none;
+    background: #fff none repeat scroll 0 0;
+    border: 1px dashed #aaa;
+    font-size: 60px;
+    padding: 50px;
+    text-align: center;
+    position: relative;
+    top: 50px;
+}
+
+.recordings-container .recordings-table .select-line {
+    cursor: pointer;
+}
+
+.recordings-container .recordings-table tr .bottom-line {
+    color: #707079;
+    font-size: 12px;
+}
+
+.recordings-container .recordings-table table.highlighted tbody tr {
+    opacity: 0.3;
+}
+
+.recordings-container .recordings-table table.highlighted tbody tr.active {
+    opacity: 1;
+}
+
+/* Recordings Player */
+.recordings-container .recordings-table .recording-player {
+    display: table-cell;
+    width: 175px;
+}
+
+.recordings-container .recordings-table .close-player {
+    cursor: pointer;
+}
+
+.recordings-container .recordings-table .recording-player audio {
+    width: 170px;
+    float: right;
+}
+
+.recordings-container .recordings-table .recording-player .close-player {
+    border: 1px solid #aaa;
+    border-radius: 0 4px 4px 0;
+    color: #888;
+    float: right;
+    font-weight: bold;
+    margin: 0;
+    padding: 3px 12px;
+}

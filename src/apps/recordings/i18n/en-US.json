@@ -1,0 +1,82 @@
+{
+	"menu": {
+		"recordings": "Recordings",
+		"settings": "Settings",
+		"account": "Account",
+		"users": "Users",
+		"devices": "Devices"
+	},
+	"dateRangePresets": {
+		"label": "Date range",
+		"custom": "Custom range",
+		"last7Days": "Last 7 days",
+		"last30Days": "Last 30 days",
+		"last90Days": "Last 90 days",
+		"last6Months": "Last 6 months",
+		"lastYear": "Last year"
+	},
+	"startDate": "Start date",
+	"endDate": "End date",
+	"filter": "Filter",
+	"close": "Close",
+	"currentlyViewing": "Currently viewing",
+	"allUsers": "All users",
+	"total": "Total",
+	"selectRecordings": {
+		"tooltip": "Select recordings",
+		"all": "All",
+		"none": "None"
+	},
+	"deleteSelected": "Delete selected",
+	"confirmDeleteSelected": "Are you sure you want to delete the selected recordings?",
+	"recordingsTable": {
+		"direction": "Direction",
+		"from": "From",
+		"targetNumber": "Target number",
+		"startTime": "Start time",
+		"duration": "Duration"
+	},
+	"direction": {
+		"inbound": "Inbound",
+		"outbound": "Outbound"
+	},
+	"accountSettings": {
+		"externalCalls": "External calls",
+		"internalCalls": "Internal calls",
+		"inboundExternal": "Inbound External",
+		"outboundExternal": "Outbound External",
+		"inboundInternal": "Inbound Internal",
+		"outboundInternal": "Outbound Internal",
+		"recordingEmails": "Recording emails",
+		"emailRecordings": "Email new recordings",
+		"emailAddress": "Send to address",
+		"save": "Save"
+	},
+	"endpointSettings": {
+		"name": "Name",
+		"username": "Username",
+		"type": "Type",
+		"inboundExternal": "Inbound External",
+		"outboundExternal": "Outbound External",
+		"inboundInternal": "Inbound Internal",
+		"outboundInternal": "Outbound Internal"
+	},
+	"toasts": {
+		"accountSettingsSaved": "Account call recording settings saved!",
+		"settingsSaved": "Call recording settings saved!",
+		"recordingDeleted": "Recording deleted!",
+		"recordingsDeleted": "Recordings deleted!"
+	},
+	"errors": {
+		"getAccount": "Issue getting account data: ",
+		"updateAccount": "Issue updating account data: ",
+		"getWebhook": "Issue getting webhook data: ",
+		"updateWebhook": "Issue updating email webhook: ",
+		"getUsers": "Issue getting users",
+		"getDevices": "Issue getting devices",
+		"updateUser": "Issue updating user",
+		"updateDevice": "Issue updating device",
+		"deleteRecording": "Issue deleting recording"
+	},
+	"confirmDeleteRecording": "Are you sure you want to delete this recording?"
+}

@@ -51,6 +51,17 @@ its display label. Name the tool for what it *does* (explore the Crossbar API); 
 the API, nor the **Kazoo SDK** that other Apps use to reach it.
 _Avoid_: using "API Explorer" for the Crossbar API itself or the Kazoo SDK; "api explorer" as an App code identity
 
+**Recordings**:
+The App for viewing, playing, downloading, and deleting call recordings, and for enabling
+per-user/-device recording and the optional email-a-recording feature. The App's identity in
+code and on disk is `recordings`; *Recordings* is its display label. It is a community App
+(third-party, not a 2600Hz/kazoo-classic upstream) vendored in-tree; the on-disk identity was
+shortened from its upstream `recordings-community`. Its email feature depends on a separate
+server-side **receiver** (see ADR-0007), which is deployment infrastructure, not part of the
+build.
+_Avoid_: "recordings-community" as the App's code identity; "Recordings" for the Callflow-level
+call-recording action or the raw Crossbar recordings endpoint
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock

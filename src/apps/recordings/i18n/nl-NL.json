@@ -1,0 +1,82 @@
+{
+	"menu": {
+		"recordings": "Opnames",
+		"settings": "Instellingen",
+		"account": "Account",
+		"users": "Gebruikers",
+		"devices": "Apparaten"
+	},
+	"dateRangePresets": {
+		"label": "Datumbereik",
+		"custom": "Aangepast bereik",
+		"last7Days": "Afgelopen 7 dagen",
+		"last30Days": "Afgelopen 30 dagen",
+		"last90Days": "Afgelopen 90 dagen",
+		"last6Months": "Afgelopen 6 maanden",
+		"lastYear": "Afgelopen jaar"
+	},
+	"startDate": "Startdatum",
+	"endDate": "Einddatum",
+	"filter": "Filteren",
+	"close": "Sluiten",
+	"currentlyViewing": "Huidige weergave",
+	"allUsers": "Alle gebruikers",
+	"total": "Totaal",
+	"selectRecordings": {
+		"tooltip": "Opnames selecteren",
+		"all": "Alles",
+		"none": "Geen"
+	},
+	"deleteSelected": "Selectie verwijderen",
+	"confirmDeleteSelected": "Weet u zeker dat u de geselecteerde opnames wilt verwijderen?",
+	"recordingsTable": {
+		"direction": "Richting",
+		"from": "Van",
+		"targetNumber": "Doelnummer",
+		"startTime": "Starttijd",
+		"duration": "Duur"
+	},
+	"direction": {
+		"inbound": "Inkomend",
+		"outbound": "Uitgaand"
+	},
+	"accountSettings": {
+		"externalCalls": "Externe oproepen",
+		"internalCalls": "Interne oproepen",
+		"inboundExternal": "Inkomend extern",
+		"outboundExternal": "Uitgaand extern",
+		"inboundInternal": "Inkomend intern",
+		"outboundInternal": "Uitgaand intern",
+		"recordingEmails": "Opnames e-mailen",
+		"emailRecordings": "Nieuwe opnames e-mailen",
+		"emailAddress": "Verzenden naar adres",
+		"save": "Opslaan"
+	},
+	"endpointSettings": {
+		"name": "Naam",
+		"username": "Gebruikersnaam",
+		"type": "Type",
+		"inboundExternal": "Inkomend extern",
+		"outboundExternal": "Uitgaand extern",
+		"inboundInternal": "Inkomend intern",
+		"outboundInternal": "Uitgaand intern"
+	},
+	"toasts": {
+		"accountSettingsSaved": "Instellingen voor accountopname opgeslagen!",
+		"settingsSaved": "Instellingen voor gespreksopname opgeslagen!",
+		"recordingDeleted": "Opname verwijderd!",
+		"recordingsDeleted": "Opnames verwijderd!"
+	},
+	"errors": {
+		"getAccount": "Probleem bij het ophalen van accountgegevens: ",
+		"updateAccount": "Probleem bij het bijwerken van accountgegevens: ",
+		"getWebhook": "Probleem bij het ophalen van webhookgegevens: ",
+		"updateWebhook": "Probleem bij het bijwerken van e-mailwebhook: ",
+		"getUsers": "Probleem bij het ophalen van gebruikers",
+		"getDevices": "Probleem bij het ophalen van apparaten",
+		"updateUser": "Probleem bij het bijwerken van gebruiker",
+		"updateDevice": "Probleem bij het bijwerken van apparaat",
+		"deleteRecording": "Probleem bij het verwijderen van opname"
+	},
+	"confirmDeleteRecording": "Weet u zeker dat u deze opname wilt verwijderen?"
+}
