@@ -1,0 +1,27 @@
+@import url('../submodules/devices/devices.css');
+@import url('../submodules/groups/groups.css');
+@import url('../submodules/myOffice/myOffice.css');
+@import url('../submodules/numbers/numbers.css');
+@import url('../submodules/strategy/strategy.css');
+@import url('../submodules/callLogs/callLogs.css');
+@import url('../submodules/users/users.css');
+@import url('../submodules/featureCodes/featureCodes.css');
+@import url('../submodules/vmboxes/vmboxes.css');
+
+#voip_container .left-menu #myOffice {
+	margin-bottom: 20px;
+}
+
+#voip_container .left-menu > div {
+	margin-top: 10px;
+}
+
+#voip_container_overlay {
+	position: fixed;
+	top: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+	opacity: .3;
+}

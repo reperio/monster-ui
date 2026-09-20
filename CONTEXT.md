@@ -36,6 +36,13 @@ A shared UI widget or workflow exposed to Apps through pub/sub topics (typically
 `common` App), rather than imported directly.
 _Avoid_: widget, shared component, control
 
+**SmartPBX**:
+The user-facing display label of the **voip** App — the hosted-PBX administration interface. The
+App's identity in code and on disk is `voip` (its `name`, its `src/apps/voip/` directory, the key
+the loader uses); *SmartPBX* is only the marketing label shown in the Apploader and App Store. Use
+_voip_ when naming the App as a unit of code; use _SmartPBX_ only for what the end user sees.
+_Avoid_: using "SmartPBX" as the App's code identity, or "voip" in user-facing copy
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock

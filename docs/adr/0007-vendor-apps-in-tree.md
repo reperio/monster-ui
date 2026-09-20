@@ -35,8 +35,23 @@ directory under `src/apps/` is now tracked.
 - The `serve.sh` per-app `git pull` loop (and its `no-update` flag) is removed, since there is
   no longer a separate per-app remote to pull. The README's description of that behavior was
   updated to match.
-- Adding a new App means adding its source under `src/apps/<name>/` and whitelisting it in
-  `.gitignore` — not standing up a new repository.
-- This change is code-and-build only. It does not install the App server-side: for `accounts`
-  to appear in a user's Apploader, Kazoo still needs an **App Document** (seeded from
+- Adding a new App means adding its source under `src/apps/<name>/` — not standing up a new
+  repository, and not touching `.gitignore` (the old `src/apps/*` ignore block was removed with
+  this change, so every directory under `src/apps/` is tracked automatically).
+- This change is code-and-build only. It does not install a vendored App server-side: for it to
+  appear in a user's Apploader, Kazoo still needs an **App Document** (seeded from
   `metadata/app.json`), which remains a deploy-time concern outside this repository.
+
+## Provenance
+
+Each App vendored under this policy, with the source repo and commit it was copied from. Upstream
+git history is not preserved; this list is the record.
+
+- **`accounts`** — `2600hz/monster-ui-accounts@91d09a06f0344d299876c9edd612c2185cfbb879`
+  (`master` tip, archived read-only, 2026-08-31). `api_url` scrubbed `http://10.26.0.41:8000/v2`
+  → `http://localhost:8000/v2`.
+- **`voip`** (display label **SmartPBX**) —
+  `kazoo-classic/monster-ui-voip@8b0395f263ad60ee0d8f2dea2a5ae03af6da2395` (`main` tip). Same
+  standalone-repo infra dropped (`.circleci/`, `.shipyard.yml`, `.base_branch`, `.gitattributes`,
+  `.gitignore`, `LICENSE`); `api_url` scrubbed `http://10.26.0.41:8000/v2` →
+  `http://localhost:8000/v2`.
