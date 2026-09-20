@@ -53,6 +53,20 @@ define(function(require){
 			iter = 0, dataCount = 4, leftTitles = "",
 			parent = container || $('#monster_content');
 
+			// This fork's framework (src/js/lib/monster.apps.js) replaces every
+			// non-base App's initApp/load with its own, so the setup this App
+			// declares in initApp never runs. Run that essential setup here in
+			// render() -- which the framework does NOT override -- once per load:
+			// the animation flag, additionalSteps (registers the 'cond' Handlebars
+			// helper the template needs + wires Clipboard), and getKazooMethods
+			// (the only caller that populates methodsGenerator, the resource list).
+			if (!self._apiExplorerInitialized) {
+				self.getAnimationFlag();
+				self.additionalSteps();
+				self.getKazooMethods();
+				self._apiExplorerInitialized = true;
+			}
+
 			self.filterMethods();
 			leftTitles = self.getLeftTitles();
 
