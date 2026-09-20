@@ -643,6 +643,11 @@ define(function(require) {
 		},
 
 		connect: function connect() {
+			if (!this.getInfo().isConfigured) {
+				console.warn('monster.socket: no valid config.api.socket (ws:// or wss://) configured, skipping connection');
+				return;
+			}
+
 			if (_.isUndefined(client)) {
 				client = new WebSocketClient({
 					uri: monster.config.api.socket

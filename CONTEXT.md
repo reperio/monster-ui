@@ -78,6 +78,18 @@ The server-side REST API of Kazoo that the Kazoo SDK talks to. Names the endpoin
 client.
 _Avoid_: the API, backend, REST layer
 
+**Blackhole**:
+Kazoo's WebSocket event service, which pushes real-time events to the UI. Reached over a
+`ws://`/`wss://` URL configured as `config.api.socket` and managed through `monster.socket`.
+Distinct from the webphone signalling socket.
+_Avoid_: the socket, websocket server, event bus
+
+**Webphone socket**:
+The separate WebSocket used by `monster.webphone` for in-browser SIP calling, configured as
+`config.api.socketWebphone`. Unrelated to Blackhole event delivery despite both being
+WebSockets.
+_Avoid_: the socket, phone websocket
+
 **API root**:
 The base URL every Request is resolved against (`config.api.default`, or an App's own
 `apiUrl`), onto which a Request's path is appended. It always ends with the Crossbar API
