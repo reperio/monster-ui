@@ -1,0 +1,116 @@
+# Monster UI
+
+The domain glossary for Monster UI — a JavaScript framework for building browser-based
+administration and end-user interfaces on top of **Kazoo**, 2600Hz's open-source telephony
+platform. This file is a glossary and nothing else: it defines the project's ubiquitous
+language, not how any of it is implemented.
+
+## Language
+
+### Application model
+
+**Monster UI**:
+The framework itself — the loader, the global `monster` object, and the conventions every App
+follows. Not any single App.
+_Avoid_: Monster, the framework, MonsterUI
+
+**App**:
+A self-contained unit of functionality living in `src/apps/<name>/`, bundling its own
+JavaScript, Handlebars views, i18n strings, and styles. The unit a user launches from the
+Apploader.
+_Avoid_: application, module, plugin
+
+**Base App**:
+An App that is always loaded, before any user-launched App — `auth` and `core`. Everything
+else is loaded on demand.
+_Avoid_: system app, built-in app
+
+**Submodule**:
+A reusable slice of functionality nested inside an App (declared in the App's `subModules`
+array and living under `submodules/`), such as the number manager or port wizard. Belongs to
+an App; not launchable on its own.
+_Avoid_: subApp, subModule, module, component
+
+**Common Control**:
+A shared UI widget or workflow exposed to Apps through pub/sub topics (typically owned by the
+`common` App), rather than imported directly.
+_Avoid_: widget, shared component, control
+
+**Apploader**:
+The launcher UI that lists the Apps a user may open and switches between them.
+_Avoid_: app switcher, launchpad, dock
+
+**App Store**:
+The catalog of installable Apps, browsed and enabled through the `appstore` App.
+_Avoid_: marketplace, catalog
+
+**App Document**:
+The record stored in Kazoo (the `apps_store` view of an account database) that registers an
+App — its name, `api_url`, icon, i18n metadata, and permissions. The source of truth for
+whether an App exists and who may use it.
+_Avoid_: app config, app record, manifest
+
+### Runtime
+
+**monster object**:
+The single global object that every App builds against, exposing the framework's core methods
+(`request`, `pub`/`sub`, `template`, the async helpers) and the `ui` and `util` helper
+namespaces.
+_Avoid_: the framework object, global, Monster instance
+
+**Request**:
+A declarative binding from a named identifier to a Crossbar API endpoint, defined in an App's
+`requests` map and invoked through the framework rather than by hand-writing a call.
+_Avoid_: API definition, endpoint, route
+
+**callApi**:
+The App-scoped helper (`self.callApi`) used inside an App to invoke a Request through the
+Kazoo SDK, automatically applying the App's flags (auth token, account, API URL).
+_Avoid_: apiCall, doRequest, fetch
+
+**Kazoo SDK**:
+The jQuery-plugin client that wraps Kazoo's REST API and is the only sanctioned way for the UI
+to reach the server.
+_Avoid_: the SDK, kazooSdk, API client
+
+**Crossbar API**:
+The server-side REST API of Kazoo that the Kazoo SDK talks to. Names the endpoints, not the
+client.
+_Avoid_: the API, backend, REST layer
+
+**Flags**:
+The per-App values and helpers exposed on `self` at runtime — `accountId`, `userId`,
+`apiUrl`, `i18n`, and similar — that carry the current session's context into an App.
+_Avoid_: app state, context, globals
+
+**uiFlags**:
+The helper on `self` for reading and writing UI-specific flags persisted onto a user or
+account document (e.g. `self.uiFlags.user.set('isBetaUser', true)`), kept separate from the
+document's own fields.
+_Avoid_: user flags, preferences, settings
+
+**i18n**:
+The internationalization strings for an App, stored as per-language JSON and resolved to an
+active language per session (user, then account, then browser, falling back to `en-US`).
+_Avoid_: translations, locale strings, l10n
+
+### Tenancy
+
+**Account**:
+A tenant in Kazoo's hierarchy — the entity a user belongs to and whose data an App reads and
+writes. Identified by `accountId`.
+_Avoid_: tenant, organization, company
+
+**Masquerading**:
+Acting within the UI on behalf of a descendant Account without logging in as it, so that
+`accountId` points at the masqueraded Account while the logged-in `userId` is unchanged.
+_Avoid_: impersonation, switching accounts, sudo
+
+**Whitelabel**:
+The per-reseller branding and feature configuration (application title, company name, logos,
+feature toggles) that reshapes how the UI appears and behaves for that reseller's Accounts.
+_Avoid_: branding, theme, customization
+
+**Reseller**:
+An Account that resells service to descendant Accounts and owns their Whitelabel configuration.
+_Avoid_: partner, distributor, agency
