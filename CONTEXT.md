@@ -83,6 +83,20 @@ are RuhNet trademarks. This is the free, view-only *Lite* edition; RuhNet's sepa
 _Avoid_: "switchboard-lite" as the App's code identity; using "Switchboard Lite" for the Pro
 edition or for the underlying Blackhole event stream itself
 
+**Parking Lot**:
+The App for viewing an account's **Parked Calls** and retrieving them — it lists the calls
+currently held in **Parking Slots**, retrieves one on click (dialing the parking feature code),
+and can call back the device that parked a call. The App's identity in code and on disk is
+`parkinglot`; *Parking Lot* is its display label. It is a community App by RuhNet, licensed
+MPL-1.1 (the same license this repository carries), and it polls the Crossbar `parked_calls`
+endpoint every 30 seconds rather than using a **Blackhole** websocket. This is a standalone, free
+App: it is *not* the retrievable parking lot built into RuhNet's paid **Switchboard Pro** edition
+(which is a feature of that separate, unvendored product), even though both surface the same
+underlying **Parked Calls**.
+_Avoid_: "parkinglot" as the display label or "Parking Lot" as the App's code identity; conflating
+this App with Switchboard Pro's built-in parking lot; using "Parking Lot" for a single **Parking
+Slot** or for the **Parked Call** concept itself
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -208,3 +222,17 @@ A user enrolled in one or more ACDC **Queues** to receive their calls, with a lo
 (available, busy, logged out) surfaced on the `callcenter` agents dashboard. An ACDC role a user
 takes on, not a distinct kind of Account or User.
 _Avoid_: operator, representative, using "Agent" for an arbitrary User or device
+
+**Parked Call**:
+A live call that a user has placed on hold into a shared **Parking Slot** so that it — or another
+user — can retrieve it from any device. A server-side state in Kazoo, exposed to the UI through the
+Crossbar `parked_calls` endpoint (the Kazoo SDK's `parkedCalls.list` **Request**) and retrieved by
+dialing a parking feature code. The domain the `parkinglot` App surfaces. Distinct from an ordinary
+hold, which pins a call to one device.
+_Avoid_: parked_calls (the endpoint) as the domain term; "held call" for a Parked Call
+
+**Parking Slot**:
+The numbered position a **Parked Call** occupies while parked — the identifier a user dials (via a
+parking feature code such as `*3<slot>`) to retrieve that call. The slot, not the call sitting in
+it.
+_Avoid_: park, extension, using "Parking Slot" for the **Parked Call** itself
