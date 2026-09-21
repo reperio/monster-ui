@@ -112,3 +112,35 @@ git history is not preserved; this list is the record.
   `src/apps/recordings/receiver/` regardless, because this repo is now its sole home and the
   App's email feature is inert without it; dropping it would silently discard the only copy of a
   working feature's backend. It is marked as such in the App's `README.md`.
+- **`callcenter`** (display label **Callcenter**) —
+  `kazoo-classic/monster-ui-callcenter@b52966a9c423bbbc3887c967cb99169e068f468c` (default-branch
+  tip, 2025-08-09). This App administers Kazoo's **ACDC** call center (queues, agents, live-call
+  eavesdrop). Like `voip`/`callflows` it nests its source under `src/apps/callcenter/` upstream,
+  so that directory was copied across. Standalone-repo infra dropped: root `README.md` (rewritten
+  to the vendored form), root `LICENSE`, and an empty stray `monster-ui-callcenter/` directory; one
+  junk download artifact (`style/static/images/icons/icons_24x24_red.261.delayed`, a mislabeled
+  1024×768 PNG referenced by nothing) was also dropped. `api_url` scrubbed
+  `https://broadbounds.com:8443/v2` → `http://localhost:8000/v2`. Like `recordings`, this is a
+  community App carrying **no declared license** (`metadata/app.json` `license` is `"-"`); its
+  `metadata/app.json` was copied faithfully, including its `author: "2600Hz"` string. Like
+  `callflows` and `apiexplorer`, it carries framework-level third-party dependencies not previously
+  in the shared set: the **DataTables** engine (v1.10.15) plus its Bootstrap integration and Buttons
+  plugins. Upstream wires these via root symlinks mapping npm-style module IDs to differently-named
+  files; in this repo that maps onto five RequireJS `paths` in `src/js/main.js` —
+  `datatables.net` → `js/vendor/datatables/jquery.dataTables.min`, `datatables.net-bs` →
+  `dataTables.bootstrap.min`, `datatables.net-buttons` → `dataTables.buttons.min`,
+  `datatables.net-buttons-html5` → `buttons.html5.min`, `datatables.net-buttons-bootstrap` →
+  `buttons.bootstrap.min` — with the five files added under `src/js/vendor/datatables/`. DataTables
+  1.10 is proper AMD (`define(['jquery', …])`), so no shim `exports`/deps were needed. Its stylesheet
+  was added as `src/css/vendor/jquery/jquery.dataTables.css` and `@import`ed from `src/css/style.css`
+  (the `bootstrap-tour` model; the App's `css: ['app','icons']` array does not load it app-locally).
+  Its other library, `toastr`, was already in the shared set (as was `jszip`, unused here — the sole
+  DataTable is configured `buttons: []`, so no HTML5 export is invoked and no JSZip/pdfmake is
+  pulled). Two faithful-copy oddities left as-is and flagged rather than "fixed": the `app.js` i18n
+  map omits `en-NZ` although an `en-NZ.json` ships on disk (orphaned string file); and
+  `dataTables.bootstrap` 1.10.15 targets Bootstrap 3 while monster-ui vendors Bootstrap 2.3.1, the
+  same version-skew caveat `bootstrap-tour` carries — its table styling should be verified against a
+  live backend. One **inline bug was fixed** (as with `recordings`): the tip commit
+  ("Fixed error when agents status is queried and there are no agents") added an `error:` handler to
+  `get_agents_status` but omitted the comma after the preceding `success` property — a hard
+  `SyntaxError` that made `app.js` unparseable and blocked the build; the missing comma was added.
