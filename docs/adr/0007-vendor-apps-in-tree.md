@@ -181,3 +181,27 @@ git history is not preserved; this list is the record.
     `MPL-1.1` `app.json` field. Standalone-repo infra dropped: `.gitignore` (`*.swp`),
     `app-build-config.json`, and the redundant root `LICENSE`; the README was rewritten to the
     vendored form.
+- **`parkinglot`** (display label **Parking Lot**) —
+  `ruhnet/monster-ui-parkinglot@6531b934e87a028273f10e2f7a44008b68f7ae23` (`master` tip,
+  2026-09-20). Another community App by **RuhNet**, a near-twin of `switchboard`: an operator view
+  of an account's **Parked Calls** that lists the calls held in parking slots, retrieves one on
+  click (dialing a parking feature code), and can call back the device that parked a call. It polls
+  the Crossbar `parked_calls` endpoint (the SDK's built-in `parkedCalls.list` resource) every 30
+  seconds rather than using a **Blackhole** websocket. Like `apiexplorer`/`recordings`/`switchboard`,
+  upstream ships its source at the *repo root* (no `src/apps/` nesting), so the root contents were
+  copied into `src/apps/parkinglot/`. Its `app.json` `name` is already the clean `parkinglot`, so no
+  App-identity rename sweep was required; only the display label `Parking Lot` diverges from the code
+  identity. No `api_url` scrub was needed — it is the empty string `""` upstream. It carries **no
+  framework-level third-party dependency**: it builds only against the shared set (`jquery`,
+  `lodash`, `monster`) plus the framework's `monster.ui.dialog`/`monster.ui.alert` helpers, so the
+  shared vendor set was left unchanged. Standalone-repo infra dropped: `app-build-config.json` and
+  the redundant root `LICENSE`; the README was rewritten to the vendored form. License handling
+  mirrors `switchboard` exactly: its tip commit is the same MPL-1.1 relicense ("to avoid any
+  incompatibilities with other MonsterUI apps when packaged together"), its root `LICENSE` is
+  byte-identical to this repository's own root `LICENSE`, so it was **dropped**, and `metadata/app.json`
+  `license` was **normalized** from the upstream placeholder `"-"` to `"MPL-1.1"`. Two departures
+  from `switchboard` are worth recording: (1) **no ES5 conversion was needed** — unlike
+  `switchboard`'s ES6 `app.js`, this App's `app.js` is already ES5 (`node --check` passes; no arrow
+  functions, `let`/`const`, or template literals), so the app-build minifier handles it as-is; and
+  (2) **no proprietary-prose header contradiction** — `app.js` carries no pre-relicense "All Rights
+  Reserved"/RuhNet-trademark comment block, so there was nothing to flag as `switchboard` had.
