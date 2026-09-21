@@ -236,3 +236,29 @@ The numbered position a **Parked Call** occupies while parked — the identifier
 parking feature code such as `*3<slot>`) to retrieve that call. The slot, not the call sitting in
 it.
 _Avoid_: park, extension, using "Parking Slot" for the **Parked Call** itself
+
+**Webhook**:
+An account-configured HTTP callback that Kazoo fires when a chosen event occurs, delivering a
+notification to a URL the account owner defines. A server-side Kazoo document keyed to a **Hook**
+(the event type) and an HTTP **Verb**, exposed to the UI through the Crossbar `webhooks` endpoint.
+The domain the `webhooks` App configures and debugs. Distinct from the `webhooks` App itself, which
+is the UI that manages Webhooks.
+_Avoid_: callback, hook (the event type, not the Webhook), using "webhooks" (the App) for a Webhook
+
+**Hook**:
+The event type a **Webhook** binds to — the catalog entry naming what fires it (inbound/outbound
+call, call answered/ended, bridged call, call parked, inbound/outbound fax, callflow-triggered,
+object-triggered). The trigger a Webhook subscribes to, not the Webhook itself.
+_Avoid_: event, trigger, using "Hook" as shorthand for the whole Webhook
+
+**Webhook Attempt**:
+One delivery try of a **Webhook** — a single fired-and-recorded notification with a success or error
+outcome, listed per-Webhook in the App's attempts view for debugging. Read from the Crossbar
+`webhooks/attempts` endpoint. The App's source calls this both "attempts" and "history"; the
+canonical term is Webhook Attempt.
+_Avoid_: history, delivery, log, using "attempt" for the Webhook's configuration
+
+**Verb**:
+The HTTP method a **Webhook** delivers with — `get`, or `post`/`put`, the two that carry a request
+body in a configured format. A per-Webhook delivery setting, not the event that triggers it.
+_Avoid_: method (ambiguous with SDK request methods), format (the body encoding, a separate setting)

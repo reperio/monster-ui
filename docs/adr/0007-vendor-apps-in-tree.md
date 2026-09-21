@@ -205,3 +205,50 @@ git history is not preserved; this list is the record.
   functions, `let`/`const`, or template literals), so the app-build minifier handles it as-is; and
   (2) **no proprietary-prose header contradiction** — `app.js` carries no pre-relicense "All Rights
   Reserved"/RuhNet-trademark comment block, so there was nothing to flag as `switchboard` had.
+- **`webhooks`** (display label **Webhooks**) —
+  `2600hz/monster-ui-webhooks@65bd25a986323a4568eb0145bd59a133d8283634` (`master` tip, archived
+  read-only, 2025-12-11). A 2600Hz App: the account-level UI for configuring and debugging Kazoo
+  **Webhooks** (account-configured HTTP callbacks that fire on a chosen event), including per-Webhook
+  delivery **Attempts** for debugging. Unlike the 2600Hz/kazoo-classic Apps above (`voip`/`callflows`/
+  `callcenter`) but like `apiexplorer`/`recordings`/`switchboard`/`parkinglot`, upstream ships its
+  source at the *repo root* (no `src/apps/` nesting), so the root contents were copied into
+  `src/apps/webhooks/`. Its `app.json` `name` is already the clean `webhooks`, so no App-identity
+  rename sweep was required; the display label `Webhooks` matches the code identity. `api_url` was
+  scrubbed `http://10.26.0.41:8000/v2` → `http://localhost:8000/v2`. It carries **no framework-level
+  third-party dependency**: it builds only against the shared set (`jquery`, `lodash`, `monster`) plus
+  the framework's `monster.ui.footable` helper (already present in the shared set — `recordings` uses
+  it too), so the shared vendor set was left unchanged. It is **already ES5** (`node --check` passes;
+  no arrow functions, `let`/`const`, or template literals), so no conversion was needed. Its stylesheet
+  is `style/app.scss` (SCSS source, not the `style/app.css` most vendored Apps ship); this is **not a
+  departure** — the gulp build (`gulp/tasks/style.js` `compileSass`, and the serve-time `scssWatcher`)
+  compiles app `.scss` → `.css` natively, exactly as the core Apps (`accounts`, `callcenter`, `auth`,
+  …) that also ship `style/app.scss`. Standalone-repo infra dropped: `.circleci/`, `circle.yml`,
+  `.shipyard.yml`, `.base_branch`, `.gitattributes`, and the redundant root `LICENSE`; the README was
+  rewritten to the vendored form. License handling mirrors `switchboard`/`parkinglot`: the upstream
+  root `LICENSE` is byte-identical to this repository's own root `LICENSE` (MPL-1.1), so it was
+  **dropped**, and `metadata/app.json` `license` was **normalized** from the upstream placeholder `"-"`
+  to `"MPL-1.1"`. Four further notes:
+  - **Dropped the upstream `design/` folder** (≈472K — `Specs/spec.md`, `Test Plan/TestPlan.xlsx`,
+    `Mockups/Webhooks.jpg` + `webhooks_wireframe.png`, and several empty `.placeholder`-only dirs).
+    Unlike `accounts` — the first vendored App, whose `design/` was kept as "App source" — this is
+    product-design/marketing collateral that no part of the build references, so it was not vendored;
+    this matches the leaner community-App pattern (`recordings`/`switchboard`/`parkinglot` shipped no
+    such folder).
+  - **Fixed three malformed i18n files** (an inline correctness fix, as with `recordings`'s wrong
+    request key and `callcenter`'s missing comma): `i18n/de-DE.json`, `i18n/es-ES.json`, and
+    `i18n/ru-RU.json` each carried a trailing comma (`"post": "POST",` before `}` in the
+    `webhookEdition.request` block), inherited byte-for-byte from upstream. Monster loads locales via
+    `$.ajax({ dataType: 'json' })` (`monster.apps.js` `loadLocale`), which uses strict `JSON.parse`;
+    the parse error routes to the `error` handler, so each of these three locales silently loaded as
+    `{}` and fell back to English at runtime (en-US, the default, was already well-formed). The single
+    trailing comma in each file was removed; only that character changed (verified against upstream).
+  - **Normalized the i18n line endings CRLF → LF.** All four upstream `i18n/*.json` files ship with
+    CRLF; every other i18n file in this repo (core and vendored) uses LF, so the four were converted
+    to LF for consistency with the repo convention. No content changed beyond line endings (verified
+    against upstream).
+  - **Two faithful-copy oddities left as-is and flagged** (as with `callcenter`'s orphaned `en-NZ.json`
+    and `switchboard`'s stale header prose), no build-blocker so no source edit: (1) the `app.js`
+    header comment ("Webhook History API needs to be fixed… the request and util are commented out")
+    is **stale** — the attempts-history feature (`renderAttemptsHistory`, the `.history` click handler)
+    is in fact live in the current code; and (2) `views/webhooks-history.html` appears to be an
+    **orphan** view — nothing in `app.js` renders it (the live feature uses `webhooks-attempts*.html`).
