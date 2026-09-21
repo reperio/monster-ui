@@ -72,6 +72,17 @@ and agents that a Callflow can hand a call off to.
 _Avoid_: "call center" as the App's code identity; using "Callcenter" for the ACDC subsystem
 itself (that is **ACDC**) or for a single **Queue**
 
+**Switchboard Lite**:
+A real-time operator panel that lists an account's registered devices — with their user/extension
+labels, including any hotdesk extensions logged into them — and shows each device's live call
+status over a **Blackhole** websocket. The App's identity in code and on disk is `switchboard`;
+*Switchboard Lite* is its display label. It is a community App by RuhNet, licensed MPL-1.1 (the
+same license this repository carries); "Switchboard", "Switchboard Pro", and "Switchboard Lite"
+are RuhNet trademarks. This is the free, view-only *Lite* edition; RuhNet's separate *Pro* edition
+(not vendored here) adds answering, parking, transfer, and a retrievable parking lot.
+_Avoid_: "switchboard-lite" as the App's code identity; using "Switchboard Lite" for the Pro
+edition or for the underlying Blackhole event stream itself
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock

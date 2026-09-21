@@ -144,3 +144,40 @@ git history is not preserved; this list is the record.
   ("Fixed error when agents status is queried and there are no agents") added an `error:` handler to
   `get_agents_status` but omitted the comma after the preceding `success` property — a hard
   `SyntaxError` that made `app.js` unparseable and blocked the build; the missing comma was added.
+- **`switchboard`** (display label **Switchboard Lite**) —
+  `ruhnet/monster-ui-switchboard-lite@a16aa5bcd6daf6cca4ac642baf43cd0861594ba0` (`master` tip,
+  2026-09-20). A community App by **RuhNet**: a real-time operator panel listing an account's
+  registered devices (with user/extension and hotdesk-extension labels) and their live call
+  status over a **Blackhole** websocket. Like `apiexplorer`/`recordings`, upstream ships its
+  source at the *repo root* (no `src/apps/` nesting), so the root contents were copied into
+  `src/apps/switchboard/`. No `api_url` scrub was needed — it is the empty string `""` upstream.
+  Its `app.json` `name` is already the clean `switchboard`, so — unlike `recordings` — no App-identity
+  rename sweep was required; only the display label `Switchboard Lite` diverges from the code
+  identity. It carries **no framework-level third-party dependency**: it builds only against the
+  shared set (`jquery`, `lodash`, `monster`) plus the framework's `monster.ui.highlight` helper
+  (the DOM element-flash helper, *not* highlight.js), so the shared vendor set was left unchanged.
+  One **build-blocker was fixed** (as with `recordings`/`callcenter`, but larger): upstream `app.js`
+  is written in ES6 (≈25 arrow functions plus `let`/`const`), which the app-build minifier
+  (`gulp-uglify`, pinned to UglifyJS 2.8.10 — ES5-only) cannot parse, so `minifyJsApp` failed with
+  `Unexpected token: punc ())` even though `node --check` passed. Rather than change the shared build
+  pipeline (which would touch all apps), the App's `app.js` was hand-converted to ES5 —
+  arrow-functions → `function` expressions (none relied on lexical `this`; they close over the
+  captured `self`/params) and `let`/`const` → `var` — matching the repo's uniform ES5-app convention.
+  This is the switchboard equivalent of the inline build-fixes the other community Apps needed; the
+  author's comments (including commented-out ES6) were left untouched. Two license notes make this
+  App the first vendored one to ship an actual declared license:
+  - Its tip commit is a relicense to **MPL-1.1** ("to avoid any incompatibilities with other
+    MonsterUI apps when packaged together"), and its root `LICENSE` is byte-identical to this
+    repository's own root `LICENSE` (also MPL-1.1). Because the license is therefore *redundant*
+    with the parent — not absent as with `recordings`/`callcenter`, and not divergent — the root
+    `LICENSE` was **dropped**, consistent with every other vendored App. `metadata/app.json`
+    `license` was **normalized** from the upstream placeholder `"-"` to `"MPL-1.1"` to reflect the
+    actual (and parent) license.
+  - One **faithful-copy contradiction left as-is and flagged** rather than edited: `app.js`'s
+    header still carries pre-relicense proprietary prose ("Copyright 2022-2026 RuhNet - All Rights
+    Reserved… You may use this software with a valid license from RuhNet") and a RuhNet trademark
+    notice, which the MPL-1.1 relicense superseded but never swept out of the source comment. The
+    author's code comments were not rewritten; the governing license is recorded here and via the
+    `MPL-1.1` `app.json` field. Standalone-repo infra dropped: `.gitignore` (`*.swp`),
+    `app-build-config.json`, and the redundant root `LICENSE`; the README was rewritten to the
+    vendored form.
