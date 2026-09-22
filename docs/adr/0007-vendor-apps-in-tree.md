@@ -252,3 +252,55 @@ git history is not preserved; this list is the record.
     is **stale** — the attempts-history feature (`renderAttemptsHistory`, the `.history` click handler)
     is in fact live in the current code; and (2) `views/webhooks-history.html` appears to be an
     **orphan** view — nothing in `app.js` renders it (the live feature uses `webhooks-attempts*.html`).
+- **`voicemails`** (display label **Voicemails**) —
+  `2600hz/monster-ui-voicemails@ce49c7007cdd12a8e329c474c9cbc36ef550b698` (`master` tip, archived
+  read-only, 2025-12-11). A 2600Hz App: the account-level UI for bulk-managing the **Voicemail
+  Messages** inside an account's **Voicemail Boxes** — listing a box's messages over a date range,
+  playing and downloading their audio, showing per-message **CDR** detail, and applying bulk
+  **Message Folder** changes, deletions, and moves to another box. It manages box *contents*; the
+  boxes themselves remain the `voip` App's `vmboxes` submodule. Like `apiexplorer`/`recordings`/
+  `switchboard`/`parkinglot`/`webhooks`, upstream ships its source at the *repo root* (no `src/apps/`
+  nesting), so the root contents were copied into `src/apps/voicemails/`. Its `app.json` `name` is
+  already the clean `voicemails` and its label is `Voicemails`, so no App-identity rename sweep was
+  required and the display label matches the code identity. `api_url` was scrubbed
+  `http://10.26.0.41:8000/v2` → `http://localhost:8000/v2` — the sole byte changed anywhere in the
+  vendored tree (verified by `diff -r` against upstream). It carries **no framework-level third-party
+  dependency**: it builds only against the shared set (`jquery`, `lodash`, `monster`) plus framework
+  helpers already present (`monster.ui.footable`/`tooltips`/`renderJSON`/`initRangeDatepicker`/
+  `generateAppLayout`/`chosen`/`dialog`/`alert`, and `monster.util.getModbID`/`friendlyTimer`/
+  `getFormatPhoneNumber`/`getDefaultRangeDates`/`dateToBeginningOfGregorianDay`/
+  `dateToEndOfGregorianDay`), so the shared vendor set was left unchanged; audio playback is a plain
+  `<audio>` element on the message's `/raw?auth_token=` URL, with no player library. Every Crossbar
+  resource it calls (`voicemail.{list,get,listMessages,updateMessages,deleteMessages,update}`,
+  `storage.get`, `cdrs.get`) was already defined in `src/js/lib/jquery.kazoosdk.js`. It is **already
+  ES5** (`node --check` passes; no arrow functions, `let`/`const`, or template literals), so no
+  conversion was needed — unlike `switchboard`. Its stylesheet is `style/app.scss` (SCSS source, as
+  with `webhooks`), compiled by the gulp build like any core App stylesheet; it `@import`s
+  `../../../css/partials/base`, a path that only resolves once the App sits at `src/apps/voicemails/`.
+  Its second tab renders only when the account has a storage plan, embedding the `common` App's
+  `storagePlanManager` Common Control scoped with `forceTypes: ['mailbox_message']`. Standalone-repo
+  infra dropped: `.circleci/`, `.shipyard.yml`, `.base_branch`, and `.gitattributes`; the README
+  (a single blank line upstream) was rewritten to the vendored form. Three further notes:
+  - **License left as the placeholder `"-"`.** Unlike `switchboard`/`parkinglot`/`webhooks` — where a
+    root `LICENSE` byte-identical to this repository's MPL-1.1 justified dropping the file and
+    normalizing `app.json` `license` to `"MPL-1.1"` — this repository ships **no license at all**:
+    `git log --all -- LICENSE` shows no such file has ever existed in its history, and the GitHub API
+    reports `license: null`. Normalizing here would mean inferring a license from sibling 2600Hz
+    repositories rather than reading one, so `"-"` was left in place and the absence recorded, the
+    same call made for `recordings` and `callcenter`.
+  - **No inline fix was needed, and one apparent bug was verified *not* to be one.**
+    `moveVoicemailMessages()` POSTs to the box currently being viewed and passes the *target* box as
+    `source_id`, which reads like an inverted move. It is correct: `source_id` is a misnomer in
+    Kazoo's own API. Kazoo's `applications/crossbar/doc/voicemail.md` states "**Move messages to
+    another voicemail box:** set the **destination** voicemail box ID in payload like
+    `{"data": {"source_id": "{NEW_VM_BOX_ID}"}}`", and `cb_vmboxes.erl` confirms it at the source:
+    `post(Context, OldBoxId, ?MESSAGES_RESOURCE)` binds the URL's box to `OldBoxId` and `source_id`
+    to `NewBoxId`, then calls `kvm_messages:move_to_vmbox(AccountId, MsgIds, OldBoxId, NewBoxId, …)`
+    (a string value moves; an array copies, via `copy_to_vmboxes`). This is recorded here and in the
+    App's `README.md` specifically so a future reader does not "fix" it into a backwards move.
+  - **Two faithful-copy oddities left as-is and flagged** (as with `callcenter`'s orphaned
+    `en-NZ.json` and `webhooks`'s orphan view), no build-blocker so no source edit: `storageBindEvents`
+    is an empty function, and `storageFormatData` is the identity function — both vestigial hooks on
+    the storage tab. Unlike `webhooks`, its i18n needed no repair: both shipped locales (`de-DE`,
+    `en-US`) parse cleanly, both are already LF, and `app.js`'s i18n map matches the files on disk
+    exactly (no orphaned locale).
