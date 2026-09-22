@@ -68,7 +68,7 @@ the list when it is vendored.
   in place — they are already safe placeholders, analogous to the `api_url` scrub.
 - **`recordings` `receiver/` scope call** — this App is the first vendored one to carry
   *server-side* code: `receiver/` is a standalone Python webhook service (plus a systemd unit
-  and config example) that powers the email-a-recording feature. Per this ADR, installing an App
+  and config example) that powers the email-a-recording feature. Per ADR-0007, installing an App
   server-side is a deploy-time concern outside this repository, so this is **out-of-band
   infrastructure, not part of the monster-ui build** — nothing in the gulp bundle references it
   and `getAppsToInclude()` does not sweep it into the build. It is vendored in place under
@@ -267,3 +267,58 @@ the list when it is vendored.
     the storage tab. Unlike `webhooks`, its i18n needed no repair: both shipped locales (`de-DE`,
     `en-US`) parse cleanly, both are already LF, and `app.js`'s i18n map matches the files on disk
     exactly (no orphaned locale).
+- **`pbxs`** (display label **PBX Connector**) —
+  `kazoo-classic/monster-ui-pbxs@5904b19bab7c72c79c9893ba6290632578202829` (`main` tip,
+  2020-08-05). A 2600Hz App: the account-level UI for **SIP trunking to non-KAZOO PBXs**. It
+  registers a customer's existing on-premise PBX (Avaya, Cisco, FreePBX, Asterisk, Mitel, …) as a
+  **Trunkstore Server** — a Kazoo `connectivity` document — through a three-step wizard (brand,
+  authentication by SIP registration or static IP, then per-server signalling and media: codecs,
+  DTMF mode, caller-ID header, T.38 faxing, REFER transfer, registration interval, NAT pings),
+  runs an interactive connectivity test, and assigns phone numbers to each server from the
+  account's spare pool. Like `apiexplorer`/`recordings`/`switchboard`/`parkinglot`/`webhooks`/
+  `voicemails`, upstream ships its source at the *repo root* (no `src/apps/` nesting), so the root
+  contents were copied into `src/apps/pbxs/`. Its `app.json` `name` is already the clean `pbxs`,
+  so no App-identity rename sweep was required; only the display label `PBX Connector` diverges
+  from the code identity, as with `voip`/SmartPBX. It carries **no framework-level third-party
+  dependency**: it builds only against the shared set (`jquery`, `lodash`, `monster`) plus
+  framework helpers already present (`monster.ui.codecSelector`/`paintNumberFeaturesIcon`/
+  `protectField`/`valid`/`validate`/`tooltips`/`toast`/`confirm`/`alert`/`getFormData`), so the
+  shared vendor set was left unchanged; every Crossbar resource it calls
+  (`connectivity.{list,get,create,update}`, `numbers.{list,get,create,update,delete,activate}`,
+  `account.get`, `callflow.list`) was already defined in `src/js/lib/jquery.kazoosdk.js`, and the
+  three Common Controls it publishes to (`common.buyNumbers`, `common.numberFeaturesMenu`,
+  `common.portWizard`) already exist under `src/apps/common/submodules/`. It is **already ES5**
+  (`node --check` passes; no arrow functions, `let`/`const`, or template literals), so no
+  conversion was needed — unlike `switchboard`. Its i18n needed no repair, unlike `webhooks`: all
+  four shipped locales (`en-US`, `es-ES`, `fr-FR`, `ru-RU`) parse cleanly, all four are already
+  LF, and `app.js`'s i18n map matches the files on disk exactly (no orphaned locale, unlike
+  `callcenter`). Standalone-repo infra dropped: `.circleci/`, `.shipyard.yml`, `.base_branch`,
+  `.gitattributes`, and the redundant root `LICENSE`; `design/` was dropped per ADR-0007's
+  standing rule (it held a single unreferenced `Test Plan/TestPlan.xlsx`); the README (empty
+  upstream) was rewritten to the vendored form. `api_url` scrubbed `http://10.26.0.41:8000/v2` →
+  `http://localhost:8000/v2`, and `metadata/app.json` `license` **normalized** from the upstream
+  placeholder `"-"` to `"MPL-1.1"` — the upstream root `LICENSE` is byte-identical to this
+  repository's own root `LICENSE` (MPL-1.1), the `switchboard`/`parkinglot`/`webhooks` case rather
+  than the `recordings`/`callcenter`/`voicemails` one. **Those two lines are the only bytes
+  changed anywhere in the vendored tree** (verified by `diff -r` against upstream). Three further
+  notes:
+  - **On the choice of upstream.** This App was taken from `kazoo-classic`, whose tip is five
+    years older than `2600hz/monster-ui-pbxs@304ab5a3` (2025-12-11) — but the **App source is
+    byte-identical** between them. The only difference across the two trees is a trailing newline
+    in `README.md`, which is rewritten here anyway, and all 11 commits `2600hz` carries beyond the
+    shared point touch only `.shipyard.yml`, `.circleci/` and rockylinux/CentOS packaging — files
+    this policy drops. Recorded so a future reader who notices the newer `2600hz` tip does not
+    conclude five years of work was missed. Note this inverts `callflows`, where the
+    `kazoo-classic` fork was genuinely *ahead* of the 2600Hz original.
+  - **A label/copy contradiction left as-is and flagged** (as with `switchboard`'s stale header
+    prose): `metadata/app.json` labels the App **PBX Connector**, which is what the Apploader and
+    App Store show, while the `pbx_connector` i18n string renders the in-app header as **SIP
+    Trunking**. Upstream's contradiction, not a vendoring artifact; no display copy was edited.
+    `PBX Connector` is the label of record, and `CONTEXT.md` records **Trunkstore Server** as the
+    canonical term for the managed entity precisely because the concept carries four names across
+    the label, the UI copy, the code (`editServer`, `listServers`, `saveEndpoint`) and the API.
+  - **It duplicates a Common Control, and was vendored that way deliberately.** Its own number
+    listing and assignment UI (`listAllNumbers`, `listNumbersByPbx`, `listAvailableNumbers`, and
+    the `pbxsUnassignedNumbers.html` spare-numbers panel) overlaps `common/submodules/numbers`,
+    even though the App already consumes three other Common Controls. Per ADR-0007's standing
+    rule, the duplicate ships; consolidating it is a refactor, not part of vendoring.
