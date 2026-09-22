@@ -6,7 +6,7 @@ import nodeSass from 'node-sass';
 import gulpSass from 'gulp-sass';
 import tildeImporter from 'node-sass-tilde-importer';
 
-const getAppsToExclude = () => ['demo_done', 'skeleton', 'tutorial'];
+const getAppsToExclude = () => ['demo_done', 'skeleton'];
 
 const getDirectories = pathToParse => fs
 	.readdirSync(pathToParse)
