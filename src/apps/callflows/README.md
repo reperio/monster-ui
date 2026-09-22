@@ -11,4 +11,5 @@ dependency, `bootstrap-tour` (its guide tour). That library is vendored into the
 set (`src/js/vendor/bootstrap-tour.min.js`, `src/css/vendor/bootstrap-tour.css`) and
 registered in `src/js/main.js` (`bootstraptour` path) and `src/css/style.css` (import).
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and provenance.
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for
+this App's provenance.

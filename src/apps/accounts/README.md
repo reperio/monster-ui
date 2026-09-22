@@ -3,7 +3,8 @@
 The `accounts` App manages multi-tenant account hierarchy and configuration. It
 is vendored in-tree under `src/apps/accounts/` and built directly by the
 monster-ui [gulp workflow][monster-ui_build] — there is no separate clone or
-install step. See `docs/adr/0007-vendor-apps-in-tree.md` for provenance.
+install step. See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and
+`docs/vendored-apps.md` for this App's provenance.
 
 ## Running the tests
 

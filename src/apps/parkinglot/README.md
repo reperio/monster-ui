@@ -21,5 +21,5 @@ carries, so no separate `LICENSE` file is vendored with it. This standalone, fre
 from the retrievable parking lot built into RuhNet's paid **Switchboard Pro** edition; see the
 `Parking Lot` glossary entry in `CONTEXT.md`.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy, provenance, and the notes specific to
-this App (source commit and license handling).
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for this
+App's entry (source commit and license handling).

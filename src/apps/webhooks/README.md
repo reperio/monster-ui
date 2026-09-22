@@ -21,6 +21,6 @@ the gulp build like any other App stylesheet.
 It is a 2600Hz App, licensed **MPL-1.1** — the same license this repository already carries, so no
 separate `LICENSE` file is vendored with it.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy, provenance, and the notes specific to
-this App (source commit, `api_url` scrub, license handling, and the faithful-copy oddities left
-in place).
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for this
+App's entry (source commit, `api_url` scrub, license handling, and the faithful-copy oddities
+left in place).

@@ -14,4 +14,5 @@ vendored into the shared set (`src/js/vendor/datatables/`) and registered in
 DataTables stylesheet is added to `src/css/vendor/jquery/jquery.dataTables.css` and imported
 from `src/css/style.css`. Its other library, `toastr`, was already present in the shared set.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and provenance.
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for
+this App's provenance.
