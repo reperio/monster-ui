@@ -108,6 +108,16 @@ Voicemail Boxes; creating and configuring the boxes themselves belongs to the **
 _Avoid_: "Voicemails" for a single **Voicemail Message** or for the **Voicemail Box** that holds
 them; using this App's name for the box-configuration UI in voip
 
+**PBX Connector**:
+The user-facing display label of the **pbxs** App — the interface for SIP-trunking a customer's
+existing non-KAZOO PBX to the platform, registering it as a **Trunkstore Server** and managing the
+numbers routed to it. The App's identity in code and on disk is `pbxs`; *PBX Connector* is only
+the label shown in the **Apploader** and **App Store**, the same split **SmartPBX** has against
+`voip`. Its own in-app header reads *SIP Trunking*, an upstream inconsistency vendored as-is; the
+label of record is *PBX Connector*.
+_Avoid_: using "PBX Connector" as the App's code identity, or "pbxs" in user-facing copy; "SIP
+Trunking" as the App's name
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -256,6 +266,18 @@ The numbered position a **Parked Call** occupies while parked — the identifier
 parking feature code such as `*3<slot>`) to retrieve that call. The slot, not the call sitting in
 it.
 _Avoid_: park, extension, using "Parking Slot" for the **Parked Call** itself
+
+**Trunkstore Server**:
+A customer's own PBX — an on-premise Avaya, Cisco, FreePBX, Asterisk, Mitel or similar system —
+registered with KAZOO so that calls can be trunked to and from it over SIP. A server-side Kazoo
+entity (the `connectivity` document, named for the legacy *Trunkstore* subsystem), carrying its
+own authentication (SIP registration or a static IP), its signalling and media settings (codecs,
+DTMF mode, caller-ID header, T.38 faxing, REFER transfer), and the numbers routed to it. The
+domain the `pbxs` App administers. Distinct from a **Callflow**, which routes a call *within*
+KAZOO: a Trunkstore Server is the far end of a trunk to equipment KAZOO does not operate.
+_Avoid_: "Server" or "Endpoint" (the App's own code terms — both are overloaded, *Endpoint*
+especially so against KAZOO devices); "connectivity" (the API spelling) as the domain term; "PBX
+Connector" or "SIP Trunking" (the App's label and header) for the entity the App manages
 
 **Webhook**:
 An account-configured HTTP callback that Kazoo fires when a chosen event occurs, delivering a
