@@ -39,6 +39,6 @@ but is correct: the field is a misnomer in Kazoo's own API. Kazoo's `voicemail.m
 OldBoxId, NewBoxId, …)`. A string value moves; an array copies. **Do not "fix" this** — inverting it
 would move messages the wrong way.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy, provenance, and the remaining notes
-specific to this App (source commit, `api_url` scrub, license handling, and the faithful-copy
-oddities left in place).
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for this
+App's entry (source commit, `api_url` scrub, license handling, and the faithful-copy oddities
+left in place).

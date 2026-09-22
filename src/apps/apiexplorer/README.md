@@ -12,4 +12,5 @@ Like `callflows`, this App carries a framework-level third-party dependency: `hi
 `xcode` theme it uses stays app-local (`style/xcode.css`, loaded via the App's own `css`
 array). Its other library, `clipboard.js`, was already present in the shared vendor set.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and provenance.
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for
+this App's provenance.

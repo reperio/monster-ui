@@ -21,5 +21,6 @@ calls, park calls, transfer calls, and shows parked calls in the parkinglot (and
 retrieve them with a click). Contact me via my site [https://ruhnet.co](https://ruhnet.co)
 for purchase information.
 
-See `docs/adr/0007-vendor-apps-in-tree.md` for the policy, provenance, and the notes specific to
-this App (source commit, license handling, and the copied-faithfully code-header contradiction).
+See `docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for this
+App's entry (source commit, license handling, and the copied-faithfully code-header
+contradiction).

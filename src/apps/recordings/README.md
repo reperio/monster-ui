@@ -10,8 +10,8 @@ shared modules (`jquery`, `lodash`, `monster`) and uses the framework's `monster
 helper. Nothing was added to the shared vendor set to vendor it.
 
 It is a community App (author Boden Garman); see
-`docs/adr/0007-vendor-apps-in-tree.md` for the policy, provenance, and the notes specific to
-this App (source commit, absent upstream license, and the `receiver/` scope call below).
+`docs/adr/0007-vendor-apps-in-tree.md` for the policy and `docs/vendored-apps.md` for this
+App's entry (source commit, absent upstream license, and the `receiver/` scope call below).
 
 ## Emailing call recordings
 
