@@ -2,6 +2,11 @@
 
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+Issues had been disabled in this repository's settings, which silently broke every operation below
+(`gh issue list` errored out); they were re-enabled rather than reworking this doc around pull
+requests. Note that implementation work still lands as a PR — an issue tracks the *what*, a PR
+carries the change.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.

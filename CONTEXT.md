@@ -97,6 +97,17 @@ _Avoid_: "parkinglot" as the display label or "Parking Lot" as the App's code id
 this App with Switchboard Pro's built-in parking lot; using "Parking Lot" for a single **Parking
 Slot** or for the **Parked Call** concept itself
 
+**Voicemails**:
+The App for bulk-managing the **Voicemail Messages** inside an account's **Voicemail Boxes** —
+listing a box's messages over a date range, playing and downloading their audio, inspecting a
+message's **CDR**, and applying bulk actions (change **Message Folder**, delete, or move messages
+to another box). The App's identity in code and on disk is `voicemails`; *Voicemails* is its
+display label. It is a 2600Hz App shipping no declared license. It manages the *contents* of
+Voicemail Boxes; creating and configuring the boxes themselves belongs to the **voip** App's
+`vmboxes` **Submodule** — the same division of labor **Callcenter** has against `callflows`.
+_Avoid_: "Voicemails" for a single **Voicemail Message** or for the **Voicemail Box** that holds
+them; using this App's name for the box-configuration UI in voip
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -195,6 +206,15 @@ _Avoid_: branding, theme, customization
 An Account that resells service to descendant Accounts and owns their Whitelabel configuration.
 _Avoid_: partner, distributor, agency
 
+**Storage Plan**:
+An Account's configuration for where Kazoo physically stores its attachments — per data type
+(voicemail media as `mailbox_message`, faxes, call recordings), pointing either at Kazoo's own
+storage or at an external provider. A server-side document on the Crossbar `storage` endpoint; an
+Account may have none at all, which is why storage UI appears conditionally. Edited through the
+`storagePlanManager` **Common Control**.
+_Avoid_: storage (bare), storage settings, attachment config, using "Storage Plan" for the Common
+Control that edits it
+
 ### Call handling
 
 **Callflow**:
@@ -262,3 +282,45 @@ _Avoid_: history, delivery, log, using "attempt" for the Webhook's configuration
 The HTTP method a **Webhook** delivers with — `get`, or `post`/`put`, the two that carry a request
 body in a configured format. A per-Webhook delivery setting, not the event that triggers it.
 _Avoid_: method (ambiguous with SDK request methods), format (the body encoding, a separate setting)
+
+**Voicemail Box**:
+The Kazoo mailbox a caller leaves a **Voicemail Message** in — a server-side document (the
+Crossbar `vmboxes` endpoint) with its own number or extension, greeting, PIN, and owner. The
+container, not its contents: the messages inside it are separate entities with their own
+lifecycle. Configured by the **voip** App's `vmboxes` **Submodule**; its contents are managed by
+the **Voicemails** App.
+_Avoid_: mailbox, vmbox (the endpoint and code spelling) as the domain term, voicemail (the
+message)
+
+**Voicemail Message**:
+One recorded message sitting in a **Voicemail Box** — its audio plus the metadata describing the
+call that left it (caller ID, from and to, timestamp, length, `call_id`, and the **Message
+Folder** it currently occupies). Addressed by a `media_id`, with its audio fetched from the box's
+`messages/{id}/raw` endpoint.
+_Avoid_: voicemail (ambiguous with the box and with the feature), recording (a call **Recording**
+is a different entity), message (ambiguous with chat and SMS)
+
+**Message Folder**:
+The state a **Voicemail Message** occupies — `new`, `saved`, or `deleted` — and the thing bulk
+actions move messages between. Persisted and filtered on as Kazoo's `folder` field; playing a new
+message moves it to `saved`. The **Voicemails** App displays it under the heading "Status", but
+the domain term is Message Folder.
+_Avoid_: status (the App's display copy), folder (bare — reads as a filesystem folder), mailbox
+(that is the **Voicemail Box**)
+
+**CDR**:
+A Call Detail Record — Kazoo's per-call record of what happened on a leg (endpoints, timestamps,
+duration, disposition, hangup cause), read from the Crossbar `cdrs` endpoint and addressed by a
+**MODB ID**. The authoritative account of a call after the fact; distinct from the **Voicemail
+Message** or recording a call may have produced.
+_Avoid_: call log (the voip App's call-history view, built on CDRs but not the record itself),
+call record, cdrs (the endpoint) as the domain term
+
+**MODB ID**:
+An identifier that names both the month-partitioned account database (Kazoo's monthly account
+database, MODB) a document lives in and the document itself. Because per-call data is stored per
+month, a bare `call_id` is not addressable on its own — the framework's `monster.util.getModbID`
+composes a `call_id` and a timestamp into the MODB ID needed to fetch, for example, the **CDR**
+behind a **Voicemail Message**. Kazoo migrates legacy voicemail messages into this format, which
+changes their ids.
+_Avoid_: call id (only one half of it), modb (the database, not the id), doc id
