@@ -322,3 +322,94 @@ the list when it is vendored.
     the `pbxsUnassignedNumbers.html` spare-numbers panel) overlaps `common/submodules/numbers`,
     even though the App already consumes three other Common Controls. Per ADR-0007's standing
     rule, the duplicate ships; consolidating it is a refactor, not part of vendoring.
+- **`numbers`** (display label **Numbers**) —
+  `2600hz/monster-ui-numbers@db1ee86be3e5a3f3f4c7c5b6baaaccea4a425cd5` (`master` tip, archived
+  read-only, 2025-12-11). A 2600Hz App, and the thinnest yet vendored: `app.js` is 60 lines that
+  render `views/app.html` (a bare `<div id="number_manager"></div>`), publish
+  `common.numbers.render` into it, and append the result. All three of its i18n files (`en-US`,
+  `fr-FR`, `ru-RU`) are literally `{}`; its stylesheet is five lines. Like
+  `apiexplorer`/`recordings`/`switchboard`/`parkinglot`/`webhooks`/`voicemails`/`pbxs`, upstream
+  ships its source at the *repo root* (no `src/apps/` nesting), so the root contents were copied
+  into `src/apps/numbers/`. Its `app.json` `name` is already the clean `numbers`, so no
+  App-identity rename sweep was required, and — unusually — the display label `Numbers` does not
+  diverge from the code identity either, so there is no label/identity split to record as there is
+  for `voip`/SmartPBX or `pbxs`/PBX Connector. It carries **no framework-level third-party
+  dependency**: it builds only against the shared set (`jquery`, `monster`), so the shared vendor
+  set was left unchanged. It is **already ES5** (`node --check` passes; no arrow functions,
+  `let`/`const`, or template literals), so no conversion was needed — unlike `switchboard`. Its
+  i18n needed no repair: all three shipped locales parse cleanly, all three are already LF, and
+  `app.js`'s i18n map matches the files on disk exactly (no orphaned locale, unlike `callcenter`).
+  Standalone-repo infra dropped: `.base_branch`, `.circleci/`, `.shipyard.yml`, and the redundant
+  root `LICENSE`; `design/` was dropped per ADR-0007's standing rule (it held a single
+  unreferenced `Test Plan/TestPlan.xlsx`, exactly the `pbxs` case); the README (empty upstream)
+  was rewritten to the vendored form. `api_url` scrubbed `http://10.26.0.41:8000/v2` →
+  `http://localhost:8000/v2`, and `metadata/app.json` `license` **normalized** from the upstream
+  placeholder `"-"` to `"MPL-1.1"` — the upstream root `LICENSE` is byte-identical to this
+  repository's own root `LICENSE` (MPL-1.1), the `pbxs`/`switchboard`/`parkinglot`/`webhooks` case
+  rather than the `recordings`/`callcenter`/`voicemails` one. **Those two lines are the only bytes
+  changed anywhere in the vendored tree** (verified by `diff -r` against upstream). Four further
+  notes:
+  - **What vendoring this App actually buys is not the App.** `common/submodules/numbers` was
+    already in this tree and already used by `voip`. That Common Control takes a `viewType`, and
+    the only publisher in this repository was `voip/submodules/numbers`, passing `'pbx'`. The
+    default — `'manager'`, the parent-account view that lists the account's direct child Accounts
+    (`account.listChildren`) and fetches the `full` number list — had **no consumer at all**.
+    Vendoring `numbers` is its only activation path, and switches on a dormant slice of that
+    Common Control: the account sections in `layout.html`, plus `spareAccount.html`,
+    `usedAccount.html`, `externalAccount.html` and the accountBrowser integration. The App is a
+    60-line shell; the reason it earns a place in the tree is that it is the key to that door.
+  - **On the choice of upstream — this inverts `pbxs`.** Taken from `2600hz` rather than
+    `kazoo-classic`, whose tip (`6de2a8fc`, 2019-10-10) is six years older. The two trees differ
+    in exactly two files: `README.md` (rewritten here anyway) and
+    `metadata/screenshots/numbers1.png` — and that PNG is a genuine source commit, `1f7f015`
+    (2021-09-16, "Update screenshot with cid numbers tab"), which `kazoo-classic` never received.
+    Every `2600hz` commit after it touches only `.circleci/` and `.shipyard.yml`. Recorded because
+    `pbxs` went the other way for the mirror-image reason (there `kazoo-classic` was older but
+    byte-identical on source); a reader who remembers that note should not read this as a
+    flip-flop. Note it also inverts `callflows`, where the `kazoo-classic` fork was genuinely
+    *ahead*. The lesson is that neither upstream is reliably newer — compare the trees each time.
+  - **It makes a dangling selector in `common` load-bearing — see issue #22.**
+    `common/submodules/numbers/numbers.js:452` re-renders after adding an external number by
+    reaching for a hardcoded global id, `self.numbersRender({ container: $('#number_manager') })`.
+    That id is supplied by exactly one thing in this repository: this App's `views/app.html`.
+    Before this App was vendored the selector matched nothing and the handler silently failed to
+    refresh (`$().empty().append(...)` is a no-op on an empty set); it is reachable only from the
+    manager view, since `views/spare.html:46` gates the `.account-header` block behind
+    `{{#compare ../viewType '!==' 'pbx'}}`. So it now works by accident of this App's choice of
+    id. Filed as **#22** rather than fixed here: the edit lands in `common`, not in the vendored
+    App, and mixing an unrelated `common` fix into a vendoring change destroys the
+    auditable-diff guarantee just as surely as editing the App would. Flagged loudly because
+    anyone tidying that global selector out of `common` would break this App with nothing in the
+    diff to explain why.
+  - **Verification is partial, and the gaps are real.** Static audit of the manager-only code
+    paths came back clean: all 17 Crossbar resources `common/submodules/numbers` calls resolve
+    under their own namespace in `src/js/lib/jquery.kazoosdk.js`; all 71 i18n references in its
+    views resolve (the five bare `cancel`/`close`/`delete` keys come from `core`'s i18n, merged
+    into every App at `monster.apps.js:665`); and all five custom Handlebars helpers its views use
+    (`compare`, `formatVariableToDisplay`, `monsterNumberWrapper`, `numberFeatures`, `select`) are
+    registered in `monster.ui.js`. `gulp build-dev` completes and emits the App correctly,
+    including `dist/css/assets/appIcons/numbers.png` from the icon pipeline, confirming
+    ADR-0007's claim that `getAppsToInclude()` needs no build wiring. But two things could **not**
+    be verified, and should not be read as covered:
+    - **`gulp build-prod` does not complete on `master` at all** — a pre-existing, repo-wide
+      breakage unrelated to this App, filed as **#23**: r.js's bundled esprima cannot parse the
+      optional chaining in `recordings/app.js`, and `gulp-uglify` cannot parse the template
+      literals present across a dozen source files. With the `recordings` blocker neutralized
+      locally (not committed), the `buildRequire`/esprima stage — the one that would catch a
+      `callcenter`-class parse error — **passes with this App present**, which is the part
+      relevant here.
+    - **One lint error is left in place, faithfully.** `npx gulp lint` flags
+      `src/apps/numbers/app.js:60` for a trailing blank line (`no-multiple-empty-lines`). It is
+      neither a build-blocker nor a bug, so per ADR-0007 it was not fixed — and `switchboard` and
+      `callflows` already carry the identical error, so leaving it matches precedent rather than
+      setting one. This keeps the two-changed-lines guarantee above exact. (Lint is not a gate
+      here in any case: `master` reports 2,757 problems across the tree.)
+    - **The manager view has never been rendered against a live backend.** A no-backend browser
+      load cannot reach it: `auth` gates the UI at a login screen, so the App's `render()` never
+      runs. Worse, its two most interesting actions are feature-gated —
+      `monster.config.whitelabel.hideBuyNumbers` and `monster.util.canAddExternalNumbers()` (which
+      matches `wnm_allow_additions: true` on the **logged-in** account, not the viewed one) — so
+      even an authenticated session on a default account exercises neither the buy path nor the
+      add-external path, *including the `#number_manager` re-render #22 is about*. This code has
+      had no exercise path in this repository for its entire life here. Treat first deployment as
+      the real test, and check those two paths specifically.

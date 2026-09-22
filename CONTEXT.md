@@ -118,6 +118,20 @@ label of record is *PBX Connector*.
 _Avoid_: using "PBX Connector" as the App's code identity, or "pbxs" in user-facing copy; "SIP
 Trunking" as the App's name
 
+**Numbers**:
+The App for managing an **Account**'s **Phone Numbers** — buying and porting them in, deleting
+them, assigning them, and editing their per-number features — across three views: **Spare
+Numbers**, **Used Numbers**, and **Caller ID Numbers**. The App's identity in code and on disk is
+`numbers`, and unusually its display label *Numbers* does not diverge from it, unlike
+**SmartPBX**/`voip` or **PBX Connector**/`pbxs`. It is a 2600Hz App licensed MPL-1.1, vendored
+in-tree. It owns almost no code: it is a shell that mounts the `common` App's numbers **Common
+Control**, which implements everything the user sees. What distinguishes it from the **voip**
+App's numbers tab is *breadth* — Numbers manages an Account's numbers **and those of its direct
+child Accounts**, where voip manages only the Account's own.
+_Avoid_: "Number Manager" (upstream's name for it, and the DOM id it renders into — but it reads
+as a tool name and collides with the label); using "Numbers" for the numbers Common Control that
+implements it, or for a **Phone Number** itself
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -346,3 +360,46 @@ composes a `call_id` and a timestamp into the MODB ID needed to fetch, for examp
 behind a **Voicemail Message**. Kazoo migrates legacy voicemail messages into this format, which
 changes their ids.
 _Avoid_: call id (only one half of it), modb (the database, not the id), doc id
+
+### Numbering
+
+**Phone Number**:
+A telephone number an **Account** holds on the platform — a server-side Kazoo entity on the
+Crossbar `phone_numbers` endpoint, carrying its own state, carrier module, and per-number
+features (caller ID, E911 address, failover, CNAM, prepend). Held by exactly one Account at a
+time, and classified by how the Account uses it: **Spare Number**, or **Used Number**. Distinct
+from an extension, which is internal to a **Callflow** and is neither bought nor ported. A Phone
+Number normally enters an Account by purchase or by port; an Account whose logged-in user carries
+`wnm_allow_additions` may also import one directly — the UI calls that "Add External Numbers",
+which is a misnomer: the result is an ordinary Phone Number and has nothing to do with a **Caller
+ID Number**.
+_Avoid_: DID; "number" bare (ambiguous with extensions and with the **Numbers** App);
+`phone_numbers` (the endpoint) as the domain term
+
+**Spare Number**:
+A **Phone Number** an Account holds but has not attached to anything — sitting in the Account's
+pool, ready to assign to a **Callflow**, a device, a user, or a **Trunkstore Server**. One of the
+**Numbers** App's three views. A number the Account does not hold at all is not spare; it is
+simply not the Account's.
+_Avoid_: unassigned, unused (both also describe numbers nobody holds); available (reads as
+purchasable from a carrier)
+
+**Used Number**:
+A **Phone Number** an Account holds *and* has attached to something that routes it — a
+**Callflow**, a device, a user, or a **Trunkstore Server**. Kazoo records the attachment on the
+number's `used_by` field, which is what separates it from a **Spare Number**. One of the
+**Numbers** App's three views.
+_Avoid_: assigned (ambiguous with assigning a number to a child **Account**); active; "in use"
+bare
+
+**Caller ID Number**:
+A telephone number an Account may present as its outbound caller ID *without holding it* on the
+platform — proven to be the Account's by a PIN callback rather than bought or ported. A separate
+server-side entity on the Crossbar `external_numbers` endpoint, not `phone_numbers`, and
+therefore never a **Phone Number**: it is not spare, not used, and cannot be routed to. Gated on
+the `caller_id.external_numbers` capability. One of the **Numbers** App's three views, where it
+is labelled *Caller ID Numbers*.
+_Avoid_: **External Number** — the code, the SDK namespace and the view file all say "external",
+but that word names two unrelated things here (this entity, and the `wnm_allow_additions` import
+that produces ordinary **Phone Numbers**), so it is not usable as a domain term; foreign number;
+BYON; using "Caller ID Number" for a number that was ported in (that becomes a Phone Number)
