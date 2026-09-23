@@ -530,3 +530,80 @@ entries are recorded in this same list and marked as imports.
       is likewise unexercised.
     - **`gulp build-prod` does not complete on `master` at all** — the pre-existing, repo-wide
       breakage filed as **#23**, unrelated to this change.
+- **`whitelabel`** (display label **Whitelabel**) —
+  `kazoo-classic/monster-ui-whitelabel@8a4e576e5f5c931c0cc947ff865f8ebe608bb1a1` (`master` tip,
+  2019-03-18). The reseller-facing editor for an Account's **Whitelabel Document** (branding,
+  feature toggles, logo/icon/welcome uploads, branded domains and their DNS records) and its
+  **Notification Templates**. Provenance is one step deeper than the URL suggests: the
+  kazoo-classic repo is a **fork** of `OpenTelecom/monster-ui-whitelabel` sitting at the identical
+  commit with zero divergence, and the code's actual authors are **SIPLABS LLC / Converba Limited**
+  (per `metadata/app.json`), not 2600Hz or kazoo-classic. The only other copy on GitHub
+  (`valolen/monster-ui-whitelabel-src`, 2019-06) has a byte-identical `app.js` and adds only a
+  `.gitignore`, so the tip vendored here is the state of the art everywhere. Like `voip`/`callflows`/
+  `callcenter` it nests its source under `src/apps/whitelabel/` upstream, so that directory was
+  copied across. Its `app.json` `name` is already the clean `whitelabel` and the display label
+  `Whitelabel` matches it, so no identity rename sweep and no label/identity split.
+  - **This is by years the oldest source vendored here** — a 2019-03-18 tip, against 2025-2026 for
+    every other App in this register. It drives write endpoints (`whitelabel.update`, `create`,
+    `delete`, `updateLogo`, `updateIcon`, `updateNotification{,Text,Html}`) whose Crossbar schemas
+    may have moved since. Per ADR-0007 the copy was vendored faithfully rather than modernized;
+    **its request payloads should be verified against a live Kazoo before it is relied on.** This is
+    the same standing caveat `callcenter`'s Bootstrap-3-vs-2.3.1 skew carries.
+  - **No declared license**, the `recordings`/`callcenter` situation rather than the
+    `switchboard`/`parkinglot`/`webhooks` one: `metadata/app.json` `license` is the placeholder
+    `"-"` and upstream ships no `LICENSE` file at all. Nothing was normalized — writing `MPL-1.1`
+    here would assert a grant the authors never made. The `author` string
+    (`"(C) 2017-2018 SIPLABS LLC (C) 2019 CONVERBA LIMITED"`) was likewise kept verbatim.
+  - **`metadata/app.json` was copied byte-for-byte unchanged** — a first for this register. No
+    `api_url` scrub was needed (it is the empty string `""` upstream), and the unresolved
+    `urls.documentation` / `urls.howto` template tokens (`{documentation_url}`,
+    `{howto_video_url}`) were left in place as the inert placeholders they are, the same call made
+    for `recordings`' `CHANGE-ME` webhook fields.
+  - **It required no SDK change and no growth of the shared vendor set.** All 18 `whitelabel.*`
+    resources it calls already exist in `src/js/lib/jquery.kazoosdk.js`, and its four AMD
+    dependencies (`jquery`, `monster`, `toastr`, `fileupload`) plus every `monster.ui` helper it
+    uses (`wysiwyg`, `alert`, `confirm`, `validate`, `valid`, `getFormData`, `tooltips`) were
+    already present. Unlike `callflows`, `apiexplorer` and `callcenter`, nothing was added to
+    `src/js/vendor/`, `src/css/vendor/`, or `src/js/main.js`.
+  - **No ES5 conversion was needed** — like `parkinglot` and `webhooks` (and unlike `switchboard`),
+    `app.js` is already ES5: `node --check` passes and it contains zero arrow functions, `let`/
+    `const`, or template literals, so the ES5-only app-build minifier handles it as-is.
+  - **Dropped the generated `style/app.css`, keeping `style/app.scss` as the source of truth** — the
+    `webhooks`/`accounts` shape rather than the `callcenter` one, which tracks both. This is a
+    deliberate departure from a byte-faithful copy, taken because the checked-in `.css` was verified
+    to be nothing but the compiled `.scss`: rendering the scss with this repo's own `node-sass`
+    8.0.0 and diffing rule-by-rule gives 50 selectors on each side, none unique to either, with the
+    only five differences being cosmetic serialization (`opacity: .3` vs `0.3`, quote style,
+    gradient-filter spacing). Tracking it would have meant tracking a generated file free to drift
+    from its source; the gulp build compiles the scss for us (verified — the build emits
+    `dist/apps/whitelabel/style/app.css`).
+  - Standalone-repo infra dropped: `gulpfile-build-app.js` (the App's own three-task gulp pipeline
+    for building itself into a `dist/`, exactly the distributed model ADR-0007 retires). The README
+    — entirely manual-installation instructions for that retired model — was rewritten to the
+    vendored form. There was no `.gitignore`, `.circleci/`, `.shipyard.yml`, `design/`, or
+    `LICENSE` to drop.
+  - **Two faithful-copy oddities left as-is and flagged** rather than "fixed", per ADR-0007's rule
+    against refactoring while vendoring:
+    - `app.js` registers two **global** Handlebars helpers at init, `inc` and `compare`. `compare`
+      is a redundant re-registration of a helper the framework already provides
+      (`monster.ui.js`'s `registerHelper({…})` block) — verified semantically identical, so the
+      overwrite is a no-op rather than a cross-App hazard. `inc` is *not* a framework helper, which
+      is why this is now its third in-tree copy alongside `callcenter` and
+      `callflows/submodules/branchvariable`. Consolidating the three onto one framework helper is a
+      legitimate follow-up refactor, not a vendoring change.
+    - `app.js` aliases toastr as `assert` (`assert = require('toastr')`, then `assert.success(…)`),
+      an upstream naming choice that reads as an assertion library. Left untouched.
+  - It is the only vendored App to bring its own **non-English localization**: `i18n/ru-RU.json`
+    alongside `en-US.json`, plus a matching `ru-RU` block in `app.json`'s i18n. Both were kept —
+    `ru-RU` is a framework-supported language (`monster.js`, and `core` ships `ru-RU` strings), so
+    the translation is live, not dead weight.
+  - **Verification.** `node --check` passes on `app.js`; all three JSON files parse; every one of
+    the 69 i18n references across `app.js` and the seven views resolves (61 against the App's own
+    `en-US.json`, 8 against the core i18n the framework merges in at `monster.apps.js:665`); every
+    Handlebars helper the views use (`monsterRadio`, `monsterText`, `monsterSwitch`,
+    `monsterCheckbox`, `replaceVar`, `compare`) is registered by the framework; and
+    `gulp build-app --app whitelabel` completes clean through `minifyJsApp` and `minifyCssApp` — the
+    gate that caught `switchboard`'s ES6 and `callcenter`'s syntax error — as does the repo-wide
+    `gulp build-dev`. What was **not** verified: nothing has been rendered against a live backend,
+    so no screen, upload, or write path has ever executed. Given the 2019 vintage, treat first
+    deployment as the real test.
