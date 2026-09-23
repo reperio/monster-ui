@@ -5,7 +5,9 @@ managing Kazoo **Resources** — the carrier gateways calls are routed out throu
 default answer would be to vendor it under `src/apps/resources/` as a faithful copy. We did
 not. Its two working submodules were **imported into the vendored `callflows` App** as
 `src/apps/callflows/submodules/globalresource/` and `.../localresource/`, and the rest of the
-App — its shell, metadata, views, and assets — was discarded.
+App — its shell, metadata, views, and assets — was discarded. (Those two submodules were
+collapsed into a single parameterized `submodules/resourcemanager/` in a follow-up change; the
+decision recorded here is unaffected, and the register entry describes the collapse.)
 
 The reason is what that App actually is: a 2021 fork of the `callflows` App by a single
 community author. Its `app.json` says so (`"author": "Emmanuel Balogun Edited From Callfow

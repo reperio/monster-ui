@@ -3,21 +3,47 @@ define(function(require) {
 		_ = require('lodash'),
 		monster = require('monster');
 
+	// Global and local resources are the same editor over two Crossbar endpoints: the same
+	// document, the same form, the same validation, differing only in where it is stored and
+	// who may reach it. Everything below is written once and parameterized by scope.
+	var scopes = {
+		global: {
+			module: 'globalresource',
+			resourceType: 'global_resource',
+			sdk: 'globalResources',
+			i18nKey: 'globalresource',
+			editTopic: 'callflows.globalresource.edit'
+		},
+		local: {
+			module: 'localresource',
+			resourceType: 'local_resource',
+			sdk: 'localResources',
+			i18nKey: 'localresource',
+			editTopic: 'callflows.localresource.edit'
+		}
+	};
+
 	var app = {
 		requests: {},
 
 		subscribe: {
-			'callflows.fetchActions': 'localResourceDefineActions',
+			'callflows.fetchActions': 'resourceDefineActions',
+			'callflows.globalresource.edit': '_globalResourceEdit',
 			'callflows.localresource.edit': '_localResourceEdit'
 		},
 
-		// Added for the subscribed event to avoid refactoring localResourceEdit
-		_localResourceEdit: function(args) {
+		// Added for the subscribed events to avoid refactoring resourceEdit
+		_globalResourceEdit: function(args) {
 			var self = this;
-			self.localResourceEdit(args.data, args.parent, args.target, args.callbacks, args.data_defaults);
+			self.resourceEdit(scopes.global, args.data, args.parent, args.target, args.callbacks, args.data_defaults);
 		},
 
-		localResourceEdit: function(data, _parent, _target, _callbacks, data_defaults) {
+		_localResourceEdit: function(args) {
+			var self = this;
+			self.resourceEdit(scopes.local, args.data, args.parent, args.target, args.callbacks, args.data_defaults);
+		},
+
+		resourceEdit: function(scope, data, _parent, _target, _callbacks, data_defaults) {
 			var self = this,
 				parent = _parent || $('#resource-content'),
 				target = _target || $('#resource-view', parent),
@@ -116,11 +142,11 @@ define(function(require) {
 						}
 					},
 					function(err, results) {
-						var render_data = self.localResourcePrepareDataForTemplate(data, defaults, $.extend(true, results, {
+						var render_data = self.resourcePrepareDataForTemplate(data, defaults, $.extend(true, results, {
 							get_resource: resourceData
 						}));
 
-						self.localResourceRender(render_data, target, callbacks);
+						self.resourceRender(scope, render_data, target, callbacks);
 
 						if (typeof callbacks.after_render === 'function') {
 							callbacks.after_render();
@@ -129,8 +155,8 @@ define(function(require) {
 				};
 
 			if (typeof data === 'object' && data.id) {
-				self.localResourceGet(data.id, function(_data, status) {
-					defaults.data.resource_type = 'local_resource';
+				self.resourceGet(scope, data.id, function(_data, status) {
+					defaults.data.resource_type = scope.resourceType;
 
 					parallelRequests(_data);
 				});
@@ -139,33 +165,33 @@ define(function(require) {
 			}
 		},
 
-		localResourcePrepareDataForTemplate: function(data, dataLocal, results) {
+		resourcePrepareDataForTemplate: function(data, dataDefaults, results) {
 			var self = this,
 				dataResource = results.get_resource,
 				dataProvisioner = results.provisionerData;
 
 			if (typeof data === 'object' && data.id) {
-				dataLocal = $.extend(true, dataLocal, { data: dataResource });
+				dataDefaults = $.extend(true, dataDefaults, { data: dataResource });
 			}
 
 			if (dataResource.hasOwnProperty('media') && dataResource.media.hasOwnProperty('audio')) {
 				// If the codecs property is defined, override the defaults with it. Indeed, when an empty array is set as the
 				// list of codecs, it gets overwritten by the extend function otherwise.
 				if (dataResource.media.audio.hasOwnProperty('codecs')) {
-					dataLocal.data.media.audio.codecs = dataResource.media.audio.codecs;
+					dataDefaults.data.media.audio.codecs = dataResource.media.audio.codecs;
 				}
 			}
 
-			dataLocal.field_data.provisioner = dataProvisioner;
-			dataLocal.field_data.provisioner.isEnabled = !_.isEmpty(dataProvisioner);
+			dataDefaults.field_data.provisioner = dataProvisioner;
+			dataDefaults.field_data.provisioner.isEnabled = !_.isEmpty(dataProvisioner);
 
-			dataLocal.extra = dataLocal.extra || {};
-			dataLocal.extra.isShoutcast = false;
+			dataDefaults.extra = dataDefaults.extra || {};
+			dataDefaults.extra.isShoutcast = false;
 
-			return dataLocal;
+			return dataDefaults;
 		},
 
-		localResourceGetValidationByResourceType: function(resourceType) {
+		resourceGetValidationByResourceType: function(resourceType) {
 			var self = this,
 				i18n = self.i18n.active(),
 				validation = {},
@@ -173,7 +199,7 @@ define(function(require) {
 					rules: validation[resourceType]
 				};
 
-			if (_.includes(['local_resource'], resourceType)) {
+			if (_.includes(['global_resource', 'local_resource'], resourceType)) {
 				_.merge(resourceTypeValidation, {
 					rules: {
 						'#name':                   { regex: /^.+$/ },
@@ -203,69 +229,70 @@ define(function(require) {
 			return resourceTypeValidation;
 		},
 
-		localResourceRender: function(data, target, callbacks) {
+		resourceRender: function(scope, data, target, callbacks) {
 			var self = this,
-				localresource_html;
+				resource_html;
 
 			if (typeof data.data === 'object' && data.data.resource_type) {
-				localresource_html = $(self.getTemplate({
-					name: data.data.resource_type,
+				resource_html = $(self.getTemplate({
+					name: 'resource',
 					data: _.merge({
 						showPAssertedIdentity: monster.config.whitelabel.showPAssertedIdentity
 					}, data),
-					submodule: 'localresource'
+					submodule: 'resourcemanager'
 				}));
 
-				var resourceForm = localresource_html.find('#resource-form');
+				var resourceForm = resource_html.find('#resource-form');
 
 				/* Do resource type specific things here */
-				if ($.inArray(data.data.resource_type, ['local_resource']) > -1) {
-					monster.ui.protectField(localresource_html.find('#gateways_password'), localresource_html);
+				if ($.inArray(data.data.resource_type, ['global_resource', 'local_resource']) > -1) {
+					monster.ui.protectField(resource_html.find('#gateways_password'), resource_html);
 				}
 
-				monster.ui.validate(resourceForm, self.localResourceGetValidationByResourceType(data.data.resource_type));
+				monster.ui.validate(resourceForm, self.resourceGetValidationByResourceType(data.data.resource_type));
 
-				if (!$('#owner_id', localresource_html).val()) {
-					$('#edit_link', localresource_html).hide();
+				if (!$('#owner_id', resource_html).val()) {
+					$('#edit_link', resource_html).hide();
 				}
 
-				localresource_html.find('input[data-mask]').each(function() {
+				resource_html.find('input[data-mask]').each(function() {
 					var $this = $(this);
 					monster.ui.mask($this, $this.data('mask'));
 				});
 
-				$('#ip_block', localresource_html).hide();
+				$('#ip_block', resource_html).hide();
 
 			} else {
-				localresource_html = $(self.getTemplate({
+				resource_html = $(self.getTemplate({
 					name: 'general_edit',
-					submodule: 'localresource'
+					submodule: 'resourcemanager'
 				}));
 
-				$('.media_pane', localresource_html).show();
+				$('.media_pane', resource_html).show();
 			}
 
-			$('*[rel=popover]:not([type="text"])', localresource_html).popover({
+			$('*[rel=popover]:not([type="text"])', resource_html).popover({
 				trigger: 'hover'
 			});
 
-			$('*[rel=popover][type="text"]', localresource_html).popover({
+			$('*[rel=popover][type="text"]', resource_html).popover({
 				trigger: 'focus'
 			});
 
-			self.winkstartTabs(localresource_html);
+			self.winkstartTabs(resource_html);
 
-			self.localResourceBindEvents({
+			self.resourceBindEvents({
+				scope: scope,
 				data: data,
-				template: localresource_html,
+				template: resource_html,
 				callbacks: callbacks
 			});
 
 			(target)
 				.empty()
-				.append(localresource_html);
+				.append(resource_html);
 
-			$('.media_tabs .buttons[resource_type="local_resource"]', localresource_html).trigger('click');
+			$('.media_tabs .buttons[resource_type="' + scope.resourceType + '"]', resource_html).trigger('click');
 		},
 
 		/**
@@ -277,20 +304,21 @@ define(function(require) {
 		 * @param  {Function} args.callbacks.save_success
 		 * @param  {Function} args.callbacks.delete_success
 		 */
-		localResourceBindEvents: function(args) {
+		resourceBindEvents: function(args) {
 			var self = this,
+				scope = args.scope,
 				data = args.data,
 				callbacks = args.callbacks,
-				localresource_html = args.template;
+				resource_html = args.template;
 
 			if (typeof data.data === 'object' && data.data.resource_type) {
-				var resourceForm = localresource_html.find('#resource-form');
-				$('#owner_id', localresource_html).change(function() {
-					!$('#owner_id option:selected', localresource_html).val() ? $('#edit_link', localresource_html).hide() : $('#edit_link', localresource_html).show();
+				var resourceForm = resource_html.find('#resource-form');
+				$('#owner_id', resource_html).change(function() {
+					!$('#owner_id option:selected', resource_html).val() ? $('#edit_link', resource_html).hide() : $('#edit_link', resource_html).show();
 				});
 
-				$('.inline_action', localresource_html).click(function(ev) {
-					var _data = ($(this).data('action') === 'edit') ? { id: $('#owner_id', localresource_html).val() } : {},
+				$('.inline_action', resource_html).click(function(ev) {
+					var _data = ($(this).data('action') === 'edit') ? { id: $('#owner_id', resource_html).val() } : {},
 						_id = _data.id;
 
 					ev.preventDefault();
@@ -300,24 +328,24 @@ define(function(require) {
 						callback: function(user) {
 							/* Create */
 							if (!_id) {
-								$('#owner_id', localresource_html).append('<option id="' + user.id + '" value="' + user.id + '">' + user.first_name + ' ' + user.last_name + '</option>');
-								$('#owner_id', localresource_html).val(user.id);
-								$('#edit_link', localresource_html).show();
+								$('#owner_id', resource_html).append('<option id="' + user.id + '" value="' + user.id + '">' + user.first_name + ' ' + user.last_name + '</option>');
+								$('#owner_id', resource_html).val(user.id);
+								$('#edit_link', resource_html).show();
 							} else {
 								/* Update */
 								if (_data.hasOwnProperty('id')) {
-									$('#owner_id #' + user.id, localresource_html).text(user.first_name + ' ' + user.last_name);
+									$('#owner_id #' + user.id, resource_html).text(user.first_name + ' ' + user.last_name);
 								/* Delete */
 								} else {
-									$('#owner_id #' + _id, localresource_html).remove();
-									$('#edit_link', localresource_html).hide();
+									$('#owner_id #' + _id, resource_html).remove();
+									$('#edit_link', resource_html).hide();
 								}
 							}
 						}
 					});
 				});
 
-				$('.resource-save', localresource_html).click(function(ev) {
+				$('.resource-save', resource_html).click(function(ev) {
 					ev.preventDefault();
 
 					var $this = $(this);
@@ -329,7 +357,7 @@ define(function(require) {
 
 							self.resourceCleanFormData(form_data);
 
-							self.localResourceSave(form_data, data, callbacks.save_success);
+							self.resourceSave(scope, form_data, data, callbacks.save_success);
 						} else {
 							$this.removeClass('disabled');
 							monster.ui.alert('error', self.i18n.active().resources.there_were_errors_on_the_form);
@@ -337,17 +365,17 @@ define(function(require) {
 					}
 				});
 
-				$('.resource-delete', localresource_html).click(function(ev) {
+				$('.resource-delete', resource_html).click(function(ev) {
 					ev.preventDefault();
 
 					monster.ui.confirm(self.i18n.active().resources.are_you_sure_you_want_to_delete, function() {
-						self.localResourceDelete(data.data.id, callbacks.delete_success);
+						self.resourceDelete(scope, data.data.id, callbacks.delete_success);
 					});
 				});
 			} else {
-				data.data.resource_type = "local_resource";
+				data.data.resource_type = scope.resourceType;
 
-				self.localResourceRender(data, $('.media_pane', localresource_html), callbacks);
+				self.resourceRender(scope, data, $('.media_pane', resource_html), callbacks);
 			}
 		},
 
@@ -377,27 +405,27 @@ define(function(require) {
 			return data;
 		},
 
-		localResourceSave: function(form_data, data, success) {
+		resourceSave: function(scope, form_data, data, success) {
 			var self = this,
 				id = (typeof data.data === 'object' && data.data.id) ? data.data.id : undefined,
 				normalized_data = self.resourceFixArrays($.extend(true, {}, data.data, form_data), form_data);
-				
+
 			if (id) {
-				self.localResourceUpdate(normalized_data, function(_data, status) {
+				self.resourceUpdate(scope, normalized_data, function(_data, status) {
 					success && success(_data, status, 'update');
 				});
 			} else {
-				self.localResourceCreate(normalized_data, function(_data, status) {
+				self.resourceCreate(scope, normalized_data, function(_data, status) {
 					success && success(_data, status, 'create');
 				});
 			}
 		},
 
-		localResourceGet: function(resourceId, callback) {
+		resourceGet: function(scope, resourceId, callback) {
 			var self = this;
 
 			self.callApi({
-				resource: 'localResources.get',
+				resource: scope.sdk + '.get',
 				data: {
 					accountId: self.accountId,
 					resourceId: resourceId
@@ -408,11 +436,11 @@ define(function(require) {
 			});
 		},
 
-		localResourceCreate: function(data, callback) {
+		resourceCreate: function(scope, data, callback) {
 			var self = this;
 
 			self.callApi({
-				resource: 'localResources.create',
+				resource: scope.sdk + '.create',
 				data: {
 					accountId: self.accountId,
 					data: data
@@ -423,11 +451,11 @@ define(function(require) {
 			});
 		},
 
-		localResourceUpdate: function(data, callback) {
+		resourceUpdate: function(scope, data, callback) {
 			var self = this;
 
 			self.callApi({
-				resource: 'localResources.update',
+				resource: scope.sdk + '.update',
 				data: {
 					accountId: self.accountId,
 					resourceId: data.id,
@@ -439,11 +467,11 @@ define(function(require) {
 			});
 		},
 
-		localResourceDelete: function(resourceId, callback) {
+		resourceDelete: function(scope, resourceId, callback) {
 			var self = this;
 
 			self.callApi({
-				resource: 'localResources.delete',
+				resource: scope.sdk + '.delete',
 				data: {
 					accountId: self.accountId,
 					resourceId: resourceId
@@ -454,45 +482,45 @@ define(function(require) {
 			});
 		},
 
-		localResourceDefineActions: function(args) {
+		resourceDefineActions: function(args) {
 			var self = this,
 				callflow_nodes = args.actions;
 
-			// Registered without the callflow-node properties (icon/category/tip/data/
-			// rules/isUsable/weight/caption/edit), which keeps this entry out of the
-			// callflow editor's palette while the entity manager still picks it up.
-			$.extend(callflow_nodes, {
-				'localresource[id=*]': {
-					name: self.i18n.active().resources.localresource,
-					module: 'localresource',
-					listEntities: function(callback) {
-						monster.parallel({
-							localResource: function(callback) {
-								self.callApi({
-									resource: 'localResources.list',
-									data: {
-										accountId: self.accountId,
-										filters: {
-											paginate: false
-										}
-									},
-									success: function(data, status) {
-										callback && callback(null, data.data);
-									}
-								});
-							}
-						},
-						function(err, results) {
-							_.each(results.localResource, function(localResource) {
-								// no jQuery wrapper since this template will be inserted directly with Handlebars
-								localResource.customEntityTemplate = '<div class="title standalone">' + localResource.name + '</div>'
-							});
+			_.each(scopes, function(scope) {
+				// Global resources are platform-wide carrier configuration, so that tab is
+				// offered only to a superduper admin of a reseller account. Local resources
+				// are account-level and are registered unconditionally.
+				if (scope === scopes.global && !(monster.util.isReseller() && monster.util.isSuperDuper() && monster.util.isAdmin())) {
+					return;
+				}
 
-							callback && callback(results.localResource);
+				// Registered without the callflow-node properties (icon/category/tip/data/
+				// rules/isUsable/weight/caption/edit), which keeps these entries out of the
+				// callflow editor's palette while the entity manager still picks them up.
+				callflow_nodes[scope.module + '[id=*]'] = {
+					name: self.i18n.active().resources[scope.i18nKey],
+					module: scope.module,
+					listEntities: function(callback) {
+						self.callApi({
+							resource: scope.sdk + '.list',
+							data: {
+								accountId: self.accountId,
+								filters: {
+									paginate: false
+								}
+							},
+							success: function(data) {
+								_.each(data.data, function(resource) {
+									// no jQuery wrapper since this template will be inserted directly with Handlebars
+									resource.customEntityTemplate = '<div class="title standalone">' + resource.name + '</div>';
+								});
+
+								callback && callback(data.data);
+							}
 						});
 					},
-					editEntity: 'callflows.localresource.edit'
-				}
+					editEntity: scope.editTopic
+				};
 			});
 		}
 	};
