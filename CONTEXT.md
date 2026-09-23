@@ -146,6 +146,20 @@ be read as the **Whitelabel** concept.
 _Avoid_: "Whitelabel" alone where the concept is meant; "branding app", "theme editor"; using this
 App's name for the **Whitelabel Document** it edits or the **Whitelabel Config** it never touches
 
+**Address Books**:
+The App for managing an **Account**'s **Lists** as address books of contacts — creating and
+renaming books, adding entries with a display name, first and last name, and either a number or a
+pattern, uploading a contact photo, downloading an entry as a vCard, and importing or exporting a
+book as CSV. The App's identity in code and on disk is `addressbooks`; its display label *Address
+Books* does not diverge from it, like **Numbers** and **Whitelabel App** and unlike
+**SmartPBX**/`voip`. It is a community App (Vladimir Barkasov, sponsored by Raffel Internet B.V.)
+declaring MPL-2.0, vendored in-tree. It reads and writes the *same* Kazoo **List** documents the
+`callflows` App edits as **Match Lists** — see **List** for what that shared storage means, and
+for why an entry created in one App may look wrong in the other.
+_Avoid_: "addressbooks" in user-facing copy; "Contacts" or "Directory" (**Directory** is a
+distinct `callflows` **Submodule** and a distinct Kazoo document type); using this App's name for
+the **List** documents it edits, or for the `callflows` `lists` Submodule that edits them too
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -297,6 +311,35 @@ and extensions that trigger it. The routed flow itself, a server-side entity. Di
 the `callflows` App, which is the UI that builds and edits Callflows — and which also
 administers **Resources**, so the App is not only a Callflow editor.
 _Avoid_: call flow, route, dialplan, using "callflows" (the App) for the flow it edits
+
+**List**:
+A Kazoo document holding a named, ordered set of **List Entries**, stored on the Crossbar `lists`
+endpoint of an account. One document type serving two unrelated purposes, and the source of a
+standing ambiguity in this codebase:
+- read as a **Match List**, it is a set of numbers and patterns a call is tested against — how the
+  `callflows` App's `lists` **Submodule** presents it, and what its `cidlistmatch`,
+  `lookupcidname`, and `destination_listmatch` submodules consume.
+- read as an **Address Book**, it is a set of contacts, each with a display name, first and last
+  name, an optional photo attachment, and a vCard — how the **Address Books** App presents it.
+
+Neither lens owns the document, and the two disagree about what an entry is: the `callflows`
+editor builds an entry from a number alone and can only add or delete entries, never amend one, so
+it cannot see or preserve the name and photo fields **Address Books** writes — and deleting a
+contact from the callflow editor takes its photo attachment with it. Two Apps over one dataset is
+an established shape here (**Numbers** against **SmartPBX**, **Voicemails** against `voip`'s
+`vmboxes`, **Callcenter** against `callflows`); what is unusual about **List** is that the two
+Apps also disagree about the *schema*. Always say which lens is meant.
+_Avoid_: "list" bare where **Match List** or **Address Book** is meant; **Blacklist** (a separate
+Kazoo document type on the `blacklists` endpoint, owned by the `callflows` `blacklist`
+**Submodule** — the `blacklist-form` id inside the `lists` Submodule's own view is a copy-paste
+artifact of its origin, not a sign the two share storage)
+
+**List Entry**:
+One record inside a **List** — a number or a pattern, plus whatever contact fields the App that
+wrote it chose to set. Addressed on the Crossbar `lists/{id}/entries` collection and holding its
+photo as an attachment. What a List Entry *means* depends on the lens reading it; see **List**.
+_Avoid_: contact, member, list item; "entry" bare in a context where a **Callflow** entry point
+could be meant
 
 **ACDC**:
 Kazoo's Automatic Call Distribution Center — the server-side subsystem that holds callers in
