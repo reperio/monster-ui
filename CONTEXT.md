@@ -132,6 +132,20 @@ _Avoid_: "Number Manager" (upstream's name for it, and the DOM id it renders int
 as a tool name and collides with the label); using "Numbers" for the numbers Common Control that
 implements it, or for a **Phone Number** itself
 
+**Whitelabel App**:
+The App for editing an **Account**'s **Whitelabel Document** and its **Notification Templates** —
+company name and application title, logo and icon uploads, the welcome message, navigation and
+port-form URLs, default language, carrier and porting settings, the branded domains and their DNS
+records, and the bodies of the emails Kazoo sends. The App's identity in code and on disk is
+`whitelabel`, and its display label *Whitelabel* does not diverge from it, like **Numbers** and
+unlike **SmartPBX**/`voip`. It is a community App (SIPLABS LLC / Converba Limited) shipping no
+declared license, vendored in-tree. Its scope is the **Whitelabel Document** only: it does not edit
+the `config.js` whitelabel block, and it is not the framework machinery that merges the two into the
+**Whitelabel Config** every other App reads. Name it *Whitelabel App* whenever the bare word would
+be read as the **Whitelabel** concept.
+_Avoid_: "Whitelabel" alone where the concept is meant; "branding app", "theme editor"; using this
+App's name for the **Whitelabel Document** it edits or the **Whitelabel Config** it never touches
+
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
 _Avoid_: app switcher, launchpad, dock
@@ -222,9 +236,44 @@ Acting within the UI on behalf of a descendant Account without logging in as it,
 _Avoid_: impersonation, switching accounts, sudo
 
 **Whitelabel**:
-The per-reseller branding and feature configuration (application title, company name, logos,
-feature toggles) that reshapes how the UI appears and behaves for that reseller's Accounts.
-_Avoid_: branding, theme, customization
+The umbrella concept: the per-reseller branding and feature configuration (application title,
+company name, logos, feature toggles) that reshapes how the UI appears and behaves for that
+reseller's Accounts. It is realized in two layers that are frequently confused — the server-side
+**Whitelabel Document**, which a reseller edits, and the deployment's static `config.js`
+`whitelabel` block, which nobody edits from the UI — merged at load time into the **Whitelabel
+Config** that Apps actually read. Use *Whitelabel* for the concept; name the layer whenever the
+distinction matters, and say **Whitelabel App** when you mean the App.
+_Avoid_: branding, theme, customization; using "Whitelabel" bare for either layer or for the
+**Whitelabel App**
+
+**Whitelabel Document**:
+The per-**Account** server-side document holding that Account's **Whitelabel** settings, exposed on
+the Crossbar `accounts/{accountId}/whitelabel` endpoint — with its logo, icon, and welcome-message
+attachments as sub-resources, and a `domains` sub-resource listing the branded domains the UI is
+served from together with the DNS records each one requires (checkable live against the resolver).
+The editable layer, and the only one the **Whitelabel App** writes. An Account may have none at all,
+in which case the deployment's `config.js` values stand alone.
+_Avoid_: "whitelabel doc" in prose, "branding document"; using it for the **Whitelabel Config** it
+feeds, or for the `config.js` block it is merged over
+
+**Whitelabel Config**:
+The merged runtime object `monster.config.whitelabel` that every App reads — produced at load time
+by overlaying the **Whitelabel Document** fetched for the current domain onto the static
+`whitelabel` block shipped in the deployment's `config.js`. Read-only from an App's point of view:
+changing it means editing one of the two layers underneath, not the merged object. Its recognized
+keys and their defaults are declared by the framework.
+_Avoid_: "the whitelabel" or "whitelabel settings"; using it for the **Whitelabel Document** or the
+`config.js` block that compose it
+
+**Notification Template**:
+An **Account**'s override of one of Kazoo's system notification templates — the subject and the
+text and HTML bodies of an email Kazoo sends on a given event, edited per Account through the
+Crossbar `accounts/{accountId}/notifications/{notificationId}` endpoint. An Account starts with no
+overrides and inherits the system templates; deleting an override reverts that notification to the
+system default rather than disabling it. Edited in the **Whitelabel App**. Distinct from a
+**Webhook**, which is an HTTP callback to a URL the Account owns rather than an email Kazoo sends.
+_Avoid_: "notification" (the event or the sent email, not the template), "email template", "system
+template" for an Account's override
 
 **Reseller**:
 An Account that resells service to descendant Accounts and owns their Whitelabel configuration.

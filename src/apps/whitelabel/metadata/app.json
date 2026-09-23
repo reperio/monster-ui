@@ -1,0 +1,54 @@
+{
+	"name": "whitelabel",
+	"i18n": {
+		"en-US": {
+			"label": "Whitelabel",
+			"description": "The Whitelabel app allows you to customize the UI.",
+			"extended_description": "With the Whitelabel app you can customize many aspects of the UI, from changing the logo to managing the e-mail notification templates. This allows you to effectively apply your own branding and make this product your own.",
+			"features": [
+				"Add your own logo",
+				"Change all the link URLs",
+				"Choose a default language",
+				"Put your own company name",
+				"Customize the welcome message",
+				"Configure Porting & Carrier settings",
+				"Manage the templates for e-mail notifications"
+			]
+		},
+		"ru-RU": {
+			"label": "Whitelabel",
+			"description": "Приложение Whitelabel позволяет настроить пользовательский интерфейс.",
+			"extended_description": "С помощью приложения Whitelabel вы можете настроить многие аспекты пользовательского интерфейса, от изменения логотипа до управления шаблонами уведомлений по электронной почте. Это позволяет эффективно применять собственный брендинг и делать продукт более персонализированным.",
+			"features": [
+				"Добавить собственный логотип",
+				"Изменить все URL-ссылки",
+				"Изменить язык по-умолчанию",
+				"Указать собственное имя компании",
+				"Изменить сообщение-приветствие",
+				"Изменить настройки портирования и используемых ресурсов",
+				"Управлять шаблонами для уведоблений по email"
+			]
+		}
+	},
+	"tags": [
+		"carrier",
+		"developer"
+	],
+	"api_url": "",
+	"icon": "whitelabel.png",
+	"author": "(C) 2017-2018 SIPLABS LLC (C) 2019 CONVERBA LIMITED",
+	"version": "1.0",
+	"license": "-",
+	"price": 0,
+	"screenshots": [
+		"screenshot_1.png",
+		"screenshot_2.png",
+		"screenshot_3.png",
+		"screenshot_4.png"
+	],
+	"urls": {
+		"documentation": "{documentation_url}",
+		"howto": "{howto_video_url}"
+	},
+	"pvt_type": "app"
+}
