@@ -44,8 +44,8 @@ directory under `src/apps/` is now tracked.
 
 ## Vendoring rules
 
-Two rules that were followed as precedent across the first Apps, written down here so they are
-decisions rather than habits inferred from reading the register:
+Rules followed as precedent across the first Apps, written down here so they are decisions
+rather than habits inferred from reading the register:
 
 - **Ship duplicated functionality as-is; never refactor onto a Common Control while vendoring.**
   Several Apps carry their own UI for something the `common` App already exposes as a **Common
@@ -62,11 +62,21 @@ decisions rather than habits inferred from reading the register:
   vendored (`accounts`) kept its `design/` and `webhooks` later dropped its; the `webhooks` call
   is the standing rule. `metadata/icon` and `metadata/screenshots` are a separate matter and are
   always kept: the **App Document** seeded from `metadata/app.json` refers to them.
+- **Vendoring an App is the default, but not the only path.** Where an upstream "App" is in fact
+  a fork of an App this repository already vendors, and its working code is written against that
+  App's own seams, it may instead be *imported* into the existing App as submodules. That path is
+  a deliberate departure from everything above — it edits the imported code and costs the host App
+  its faithful-copy guarantee — so it requires its own ADR recording why, and it is not to be
+  reached for merely because two Apps overlap. **ADR-0008** is the first and so far only instance
+  (the `resources` App imported into `callflows`); the rules above continue to govern every App
+  vendored as an App.
 
 ## Provenance
 
 Provenance for each App vendored under this policy — source repository, commit, and every change
 made to the copy — is recorded in the register at [`docs/vendored-apps.md`](../vendored-apps.md).
+Apps imported into an existing App under the rule above are recorded in the same register, marked
+as imports rather than vendored Apps.
 
 It lives outside this file because it is a running log, not a decision: it grows by an entry on
 every App vendored, while the decision recorded above was made once. Add new Apps to the register.

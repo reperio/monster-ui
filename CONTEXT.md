@@ -245,7 +245,8 @@ Control that edits it
 A Kazoo document describing the chain of actions a call traverses — menus/IVRs, ring
 groups, voicemail, time-of-day routing, feature codes, and the like — keyed to the numbers
 and extensions that trigger it. The routed flow itself, a server-side entity. Distinct from
-the `callflows` App, which is the UI that builds and edits Callflows.
+the `callflows` App, which is the UI that builds and edits Callflows — and which also
+administers **Resources**, so the App is not only a Callflow editor.
 _Avoid_: call flow, route, dialplan, using "callflows" (the App) for the flow it edits
 
 **ACDC**:
@@ -360,6 +361,38 @@ composes a `call_id` and a timestamp into the MODB ID needed to fetch, for examp
 behind a **Voicemail Message**. Kazoo migrates legacy voicemail messages into this format, which
 changes their ids.
 _Avoid_: call id (only one half of it), modb (the database, not the id), doc id
+
+**Resource**:
+A Kazoo document describing a carrier connection calls can be routed out through — the rules
+(number patterns) it matches, its flags and weighting, and the **Resource Gateways** that carry
+the traffic. A server-side entity on the Crossbar `resources` endpoint, scoped either
+platform-wide (**Global Resource**) or to one **Account** (**Local Resource**). Administered in
+the `callflows` App. Distinct from the `resources[]` Callflow action, which routes a call *to*
+whichever Resources apply rather than describing one, and from the `resource:` key in a **Kazoo
+SDK** call, which names an SDK method.
+_Avoid_: bare "resource" for anything but this document; carrier (the company, not its config);
+trunk; gateway (that is the sub-entity)
+
+**Global Resource**:
+A **Resource** owned by the platform rather than by any **Account** — held at the Crossbar
+`resources` endpoint with no account in its path, and available to every Account that has no
+**Local Resource** taking precedence. Superduper-admin territory: the `callflows` App offers its
+tab only to a superduper admin of a reseller account.
+_Avoid_: system resource, master resource, carrier (the company)
+
+**Local Resource**:
+A **Resource** owned by a single **Account** — held at `accounts/{accountId}/resources` — letting
+that Account route calls out through its own carrier connection instead of the platform's
+**Global Resources**.
+_Avoid_: account resource, private resource, local carrier
+
+**Resource Gateway**:
+One SIP endpoint inside a **Resource** — its server, port, realm, credentials or IP
+authentication, codecs, and prefix/suffix rules. A Resource carries one or more, and they are
+what a call actually egresses through; the Resource is the routing policy around them. The
+upstream App that this UI came from was labelled *Resource Gateways* after them.
+_Avoid_: trunk, gateway bare (ambiguous with a **Trunkstore Server**), endpoint (a device-side
+term)
 
 ### Numbering
 
