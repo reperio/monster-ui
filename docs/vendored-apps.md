@@ -607,3 +607,89 @@ entries are recorded in this same list and marked as imports.
     `gulp build-dev`. What was **not** verified: nothing has been rendered against a live backend,
     so no screen, upload, or write path has ever executed. Given the 2019 vintage, treat first
     deployment as the real test.
+- **`addressbooks`** (display label **Address Books**) —
+  `kazoo-classic/monster-ui-addressbooks@f33914c18fcb0e80ae088121621d3b022fc729ff` (`master` tip,
+  **2018-03-01** — the oldest source vendored here, and a 13-commit repository). A **community App**
+  by *Vladimir Barkasov, sponsored by Raffel Internet B.V.* for managing an **Account**'s **Lists**
+  as address books of contacts: display/first/last name per entry, a number or pattern, photo
+  upload, per-entry vCard download, and CSV import/export, over a DataTables grid. Like
+  `voip`/`callflows`/`callcenter` it nests its source under `src/apps/addressbooks/` upstream, so
+  that directory was copied across. No `api_url` scrub was needed — it is the empty string `""`
+  upstream. Standalone-repo infra dropped: the root `README.md` (entirely manual-install
+  instructions for the retired distributed model — `ln -s` symlinks, `init_app`, hand-editing
+  `main.js`), rewritten to the vendored form. There was no `.gitignore`, `.circleci/`,
+  `.shipyard.yml`, `design/`, or `LICENSE` to drop.
+  - **Not imported into `callflows`, though it shares that App's storage.** This App drives the same
+    Crossbar `lists` and `lists/{id}/entries` documents that `callflows/submodules/lists` drives, so
+    ADR-0007's second path (import into the existing App, per ADR-0008) was considered and rejected.
+    It fails all three of the tests ADR-0008 applied to `resources`: it is **not a fork** of
+    `callflows` (different author, 2018, zero shared files), it is **not written to run inside** it
+    (zero `callflows.*` references, no `fetchActions`/`listEntities`/`editEntity`, and one pub in
+    1,197 lines — `auth.initApp`), and it duplicates none of a sibling App's bulk. Mechanically it
+    would have been a *port*, not an import: `resources` was cheap to import because its code already
+    spoke callflows' entity-manager contract, where this App would have to be rewritten onto it and
+    lose its grid, CSV, vCard, and photo paths. It would also forfeit separate grantability — and
+    unlike **Global Resources** (superduper-admin territory anyway), `tags: ["reseller"]` end-user
+    contact data is exactly the thing you want grantable without the callflow editor. Two Apps over
+    one dataset is this repository's established shape (**Numbers**/`voip`, **Voicemails**/`voip`,
+    **Callcenter**/`callflows`); the overlap is recorded as glossary, not packaging — see the
+    **List**, **List Entry**, and **Address Books** entries in `CONTEXT.md`, and the App's own
+    `README.md`, which warn that the `callflows` list editor can only add and delete entries (never
+    amend one), cannot see the name/photo fields this App writes, and **takes a contact's photo
+    attachment with it when deleting** the entry.
+  - **Dropped both bundled duplicates of the shared vendor set.** Unusually, upstream ships parts of
+    the *framework's* vendor tree inside its own repository: `src/js/vendor/datatables/` (five files)
+    and `src/css/vendor/jquery/jquery.dataTables.css`. All six are **byte-identical** to the copies
+    `callcenter` already put in this tree, and all five RequireJS `paths` are already registered in
+    `src/js/main.js`, so none were brought across and `main.js` was not touched — the `apiexplorer`
+    precedent (its redundant `highlight.pack.js`/`clipboard.min.js`). Its `app.css` line 1 reaches
+    out of the App directory (`@import url('../../../css/vendor/jquery/jquery.dataTables.css')`),
+    redundant with `style.css:14`; left exactly as-is, because `callcenter/style/app.css:1` already
+    does the identical thing.
+  - **Grew the shared vendor set by a version bump — Font Awesome 4.6.3 → 4.7.0.** The App bundled
+    its own complete FA **4.7.0** under `style/font-awesome/` (stylesheet + six font binaries),
+    `@import`ed from its `app.css`, against this repo's shared **4.6.3**. Keeping it was rejected: an
+    app-local FA stylesheet is not scoped — it redefines `@font-face FontAwesome` and the whole
+    `.fa-*` namespace globally and loads *after* `style.css`, so it would silently shadow 4.6.3 for
+    the entire UI whenever this App was open. Dropping it without a bump was also rejected: of the
+    five icons the App uses, **`fa-address-card` exists only in 4.7.0** (zero hits in 4.6.3) and is
+    the vCard button. So the bundle was deleted (and its now-dead `@import` removed from `app.css`),
+    and `src/css/vendor/font-awesome/` was bumped to 4.7.0 in place. **Gated on a class diff**: 4.6.3
+    defines 752 `.fa-*` classes, 4.7.0 defines 808, with **zero removed and 56 added** — purely
+    additive, so no existing App's icons can change. `src/css/lib/custom/font-awesome-add.css` was
+    checked and depends on nothing that moved. No ADR: reverting is a `git checkout` of one
+    stylesheet and four font binaries, and ADR-0007's "growing the shared vendor set" rule already
+    governs it — the `bootstrap-tour`/`highlight.js`/DataTables precedent, each on a register entry
+    alone.
+  - **Dropped an unverifiable license claim.** Upstream's `metadata/app.json` declares
+    `"license": "MPL2"` with **no `LICENSE` file anywhere in the repository** to back it, and `MPL2`
+    is not a valid SPDX identifier. It was changed to **`"-"`** — this tree's value for *no license
+    declared* (`accounts`, `apiexplorer`, `callcenter`, `callflows`, `recordings`, `voicemails`,
+    `voip`, `whitelabel`). This is a deliberate departure from a byte-faithful copy: `app.json`'s
+    `license` is rendered to users verbatim at `appstore/views/appPopup.html:42`, and republishing an
+    unbacked claim as though it had been checked is worse than declaring none. Dropping the string
+    changes no legal reality — whatever grant the author made stands independently of this metadata.
+  - **Fixed one inline bug** (the `recordings`/`callcenter` precedent — outright bugs only): at
+    `app.js:426` the photo-upload success toast was `toastr.success('self.i18n.active()
+    .addressbooks.changePhotoSuccessMessage')` — the entire expression wrapped in single quotes, a
+    debugging leftover and the only quoted one of the App's six `toastr.success` calls, so a
+    successful photo change displayed that code string to the user. The quotes were removed; the key
+    it names was also **absent** from `i18n/en-US.json`, so it was added in the siblings' voice
+    (`"The photo was updated successfully"`, matching `"The list was updated successfully"`). This is
+    the only change of substance to the App's own code.
+  - **First vendored App to read its own `monster.config` namespace.** Its optional
+    default-address-book feature reads an `addressbooksapp` block (`create_default_addressbook`,
+    `default_addressbook_name`) from `src/js/config.js`. `config.js` was deliberately **left
+    untouched** — it is tracked here as a minimal working example, the feature defaults to off, and
+    the App guards a missing block correctly (`app.js:233`). The block is documented in the App's
+    `README.md` instead; per-App keys in the framework's minimal example would invite every future
+    vendored App to add one.
+  - **Verification.** `node --check` passes on `app.js`; both JSON files parse; the App is **ES5-only**
+    (no arrow functions, `let`/`const`, or template literals — the gate that caught `switchboard`);
+    all **62** i18n references across `app.js` and the seven views resolve (against the App's own
+    `en-US.json` and the core i18n the framework merges in); both Handlebars block helpers the views
+    use (`monsterRadio`, `compare`) are framework-registered; and `gulp build-app --app addressbooks`
+    completes clean through `minifyJsApp` and `minifyCssApp`, as does the repo-wide `gulp build-dev`.
+    What was **not** verified: nothing has been rendered against a live backend, so no screen and in
+    particular none of the write paths — photo upload, CSV import, vCard export — has ever executed.
+    Given the 2018 vintage, the oldest here, treat first deployment as the real test.

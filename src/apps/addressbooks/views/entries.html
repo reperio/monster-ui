@@ -1,0 +1,47 @@
+<h2>{{i18n.addressbooks.entriesTitle}}</h2>
+
+<div class="buttons-wrapper entry-table-top-btn-box">
+	<a class="btn btn-primary create-entry-btn js-create-entry" href="" data-list-id="{{listId}}"
+	   title="{{i18n.addressbooks.addEntryBtnText}}">
+		<i class="fa fa-plus"></i> {{i18n.addressbooks.addEntryBtnText}}
+	</a>
+
+	<span class="btn file-upload-btn import-csv-button">
+		<input type="file" class="js-import-csv" data-list-id="{{listId}}"
+			title="{{i18n.addressbooks.importCSVBtnText}}"/>
+		{{i18n.addressbooks.importCSVBtnText}}
+	</span>
+</div>
+
+<table id="entries-table" class="entries-table">
+	<thead>
+		<tr>
+			<th>№</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.name}}</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.firstName}}</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.lastName}}</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.number}}</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.pattern}}</th>
+			<th>{{i18n.addressbooks.entriesTable.columnHeader.type}}</th>
+			<th class="no-sort">
+				{{i18n.addressbooks.entriesTable.columnHeader.actions}}
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+	{{#each this.entries}}
+		<tr class="js-item" id="{{id}}" data-entry-id="{{id}}" data-list-id="{{@root.listId}}">
+			<td>{{inc @index}}</td>
+			<td>{{ value.displayname }}</td>
+			<td>{{ value.firstname }}</td>
+			<td>{{ value.lastname }}</td>
+			<td>{{ value.number }}</td>
+			<td>{{ value.pattern }}</td>
+			<td>{{ value.type }}</td>
+			<td>
+				{{{ @root.entriesButtons }}}
+			</td>
+		</tr>
+	{{/each}}
+	</tbody>
+</table>

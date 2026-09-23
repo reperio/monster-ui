@@ -1,0 +1,65 @@
+{
+	"addressbooks": {
+		"sidebar": {
+			"title": "Address Books",
+			"menuNewListItemText": "New list"
+		},
+		"editListTitle": "Edit Address Book List",
+		"createListTitle": "Create Address Book List",
+		"listItemNameLabel": "Name",
+		"listItemDescriptionLabel": "Description",
+		"listItemOrgLabel": "Organization",
+		"saveListItemButtonText": "Save",
+		"deleteListItemButtonText": "Delete",
+		"createListItemButtonText": "Create",
+		"deleteAllEntriesButtonText": "Delete all entries",
+		"cancelCreatingListItemButtonText": "Cancel",
+		"deleteListConfirmText": "Are you sure you want to delete this list?",
+		"mainContentIntroMessage": "Select address book please",
+		"entriesTitle": "Entries",
+		"addEntryBtnText": "Add entry",
+		"importCSVBtnText": "Import CSV",
+		"uploadPhotoBtnText": "Upload photo",
+		"editPhotoDialogTitle": "Edit photo",
+		"editEntryDialogTitle": "Edit Entry &laquo;${name}&raquo;",
+		"createEntryDialogTitle": "Create Entry",
+		"validationMessage": {
+			"specifyDifferentValue": "Please specify a different (non-default) value"
+		},
+		"entriesImportSuccessMessage": "The entries were imported successfully",
+		"allEntriesWereDeletedSuccessMessage": "All entries in current list were deleted successfully",
+		"listCreatedSuccessMessage": "The list was created successfully",
+		"defaultListCreatedSuccessMessage": "The default list was created successfully",
+		"listUpdatedSuccessMessage": "The list was updated successfully",
+		"changePhotoSuccessMessage": "The photo was updated successfully",
+		"entriesTable": {
+			"columnHeader": {
+				"name": "Display name",
+				"firstName": "Firstname",
+				"lastName": "Lastname",
+				"type": "Type",
+				"number": "Number",
+				"pattern": "Pattern",
+				"actions": "Actions"
+			},
+			"editBtnText": "Edit",
+			"deleteBtnText": "Delete",
+			"getVcardBtnText": "Get vCard",
+			"editPhotoBtnText": "Edit photo"
+		},
+		"deleteEntryConfirmText": "Are you sure you want to delete this entry?",
+		"deleteAllEntriesConfirmText": "Are you sure you want to delete all entries in current list?",
+		"entryForm": {
+			"displaynameLabel": "Display Name",
+			"firstnameLabel": "Firstname",
+			"lastnameLabel": "Lastname",
+			"numberRadioLabel": "Number",
+			"patternRadioLabel": "Pattern",
+			"numberLabel": "Phone Number",
+			"patternLabel": "Match pattern",
+			"typeLabel": "Type",
+			"saveBtnText": "Save",
+			"cancelBtnText": "Cancel"
+		}
+	}
+}
