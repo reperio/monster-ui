@@ -423,8 +423,9 @@ entries are recorded in this same list and marked as imports.
   (`main` tip, 2021-08-23; a GitHub fork of the author's own `baloeng/monster-ui-resources` at the
   identical SHA — 7 commits total, sole author Emmanuel Balogun). This is the **first entry in this
   register that is not a vendored App**. Per **ADR-0008**, its two working submodules were imported
-  into the already-vendored `callflows` App as `src/apps/callflows/submodules/globalresource/` and
-  `.../localresource/`, and the rest of the upstream repository was discarded. The reason is that
+  into the already-vendored `callflows` App as two submodules — since collapsed into the single
+  `src/apps/callflows/submodules/resourcemanager/` (see the twins note below) — and the rest of the
+  upstream repository was discarded. The reason is that
   the upstream "App" is a fork of `callflows` — its `app.json` says so (`"author": "Emmanuel Balogun
   Edited From Callfow App"`) — whose working code is written against callflows' own seams. It
   manages Kazoo **Resources** (carrier gateways) over the Crossbar `resources` endpoints; all ten
@@ -433,7 +434,7 @@ entries are recorded in this same list and marked as imports.
   one extra `require`, `bootstraptour`, is already in the shared vendor set and was never used by
   this code anyway), so the shared vendor set was left unchanged. It is **already ES5**
   (`node --check` passes), so no conversion was needed, unlike `switchboard`.
-  - **What was imported** — `globalresource.js` + `localresource.js` and their two views each
+  - **What was imported** (pre-collapse layout) — `globalresource.js` + `localresource.js` and their two views each
     (`general_edit.html`, and `global_resource.html` / `local_resource.html`, selected dynamically
     by `name: data.data.resource_type`); the `resources` i18n subtree (93 keys), added as a new
     top-level key in `callflows/i18n/en-US.json` (no collision — callflows' own carrier strings live
@@ -488,12 +489,28 @@ entries are recorded in this same list and marked as imports.
     read `originalAccount`, not `currentAccount`, so **the tab now survives masquerading** where
     upstream's did not. `localresource` registers unconditionally, as upstream intended. Keeping the
     gate inside the submodule leaves `callflows/app.js` and `views/layout.html` untouched.
-  - **The twins were imported as twins.** `globalresource.js` and `localresource.js` differ only in
-    global/local naming and which SDK resource they call; their `general_edit.html` views are
-    byte-identical. Collapsing them into one parameterized submodule is a blind refactor of ~1,000
-    lines against no live backend and would erase the line-for-line traceability this entry depends
-    on, so it was left for a follow-up issue — the same reasoning ADR-0007 applies to Common Control
-    consolidation.
+  - **The twins were imported as twins, then collapsed in a follow-up.** `globalresource.js` and
+    `localresource.js` were imported unchanged — 1,009 lines that a normalizing diff
+    (`sed 's/global/local/g'`) proved identical apart from the gate, with all four views
+    byte-identical in pairs. They were imported that way deliberately: collapsing them in the same
+    change would have been a blind refactor against no live backend and would have erased the
+    line-for-line traceability this entry depends on, the same reasoning ADR-0007 applies to Common
+    Control consolidation. The collapse landed separately, once that traceability had served its
+    purpose: the two submodules became one, `submodules/resourcemanager/` (529 lines, one
+    `general_edit.html` and one `resource.html`), parameterized by a `scopes` map holding each
+    scope's `module`, `resourceType`, `sdk` namespace, `i18nKey` and `editTopic`. It still registers
+    two entity-manager entries under the same `module` names and subscribes to both
+    `callflows.<global|local>resource.edit` topics, so nothing downstream of it changed. Three
+    notes: the shared `resourceCleanFormData` / `resourceFixArrays` helpers were *already* collapsed
+    by accident — both twins defined them under identical unprefixed names, and
+    `monster.apps.js:777` merges every submodule flat onto the App with `$.extend(true, app, module)`,
+    so one silently overwrote the other; the two `resource_type` guards became
+    `['global_resource', 'local_resource']` membership tests, equivalent per scope since each caller
+    only ever passes its own type; and the dynamic template lookup (`name: data.data.resource_type`)
+    became a fixed `name: 'resource'`, the two type-named views having been byte-identical. One
+    further simplification: each twin's `listEntities` wrapped its single list request in a
+    `monster.parallel({ … }, fn)` of one key, which the collapsed version calls directly — same
+    request, same callback payload, one less indirection.
   - **40 upstream lint errors were left in place, faithfully** (quotes, `key-spacing`, `eqeqeq`,
     trailing spaces, a missing semicolon, …). None is a build-blocker or a bug, so per ADR-0007 they
     were not fixed; `master` reports 2,757 problems and this branch 2,797, the entire delta inside
