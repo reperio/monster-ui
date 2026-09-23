@@ -10,6 +10,11 @@ infrastructure, the `api_url` scrub, license handling, any growth of the shared 
 any inline fix or faithful-copy oddity deliberately left in place. Add a new App to the end of
 the list when it is vendored.
 
+Most entries are Apps vendored under `src/apps/<name>/`. One is not: under the second path added
+to ADR-0007's vendoring rules, an upstream App that is really a fork of an App already vendored
+here may instead be *imported* into that App as submodules, which requires its own ADR. Such
+entries are recorded in this same list and marked as imports.
+
 - **`accounts`** — `2600hz/monster-ui-accounts@91d09a06f0344d299876c9edd612c2185cfbb879`
   (`master` tip, archived read-only, 2026-08-31). `api_url` scrubbed `http://10.26.0.41:8000/v2`
   → `http://localhost:8000/v2`.
@@ -413,3 +418,98 @@ the list when it is vendored.
       add-external path, *including the `#number_manager` re-render #22 is about*. This code has
       had no exercise path in this repository for its entire life here. Treat first deployment as
       the real test, and check those two paths specifically.
+- **`resources` → imported into `callflows`, not vendored as an App** (upstream display label
+  **Resource Gateways**) — `kazoo-classic/monster-ui-resources@55c693ec3081c546196aa8644854d371696a33ac`
+  (`main` tip, 2021-08-23; a GitHub fork of the author's own `baloeng/monster-ui-resources` at the
+  identical SHA — 7 commits total, sole author Emmanuel Balogun). This is the **first entry in this
+  register that is not a vendored App**. Per **ADR-0008**, its two working submodules were imported
+  into the already-vendored `callflows` App as `src/apps/callflows/submodules/globalresource/` and
+  `.../localresource/`, and the rest of the upstream repository was discarded. The reason is that
+  the upstream "App" is a fork of `callflows` — its `app.json` says so (`"author": "Emmanuel Balogun
+  Edited From Callfow App"`) — whose working code is written against callflows' own seams. It
+  manages Kazoo **Resources** (carrier gateways) over the Crossbar `resources` endpoints; all ten
+  SDK resources it calls (`globalResources.*`, `localResources.*`) already existed in
+  `src/js/lib/jquery.kazoosdk.js`, and it carries **no framework-level third-party dependency** (its
+  one extra `require`, `bootstraptour`, is already in the shared vendor set and was never used by
+  this code anyway), so the shared vendor set was left unchanged. It is **already ES5**
+  (`node --check` passes), so no conversion was needed, unlike `switchboard`.
+  - **What was imported** — `globalresource.js` + `localresource.js` and their two views each
+    (`general_edit.html`, and `global_resource.html` / `local_resource.html`, selected dynamically
+    by `name: data.data.resource_type`); the `resources` i18n subtree (93 keys), added as a new
+    top-level key in `callflows/i18n/en-US.json` (no collision — callflows' own carrier strings live
+    at `callflows.resource.*`, and the views reference only `i18n.resources.*`, so no view was
+    edited); and the trailing 98-line `.callflows-port .media_tabs` block from upstream `style/app.css`,
+    appended to `callflows/style/app.css`. Two lines were added to callflows' `appSubmodules` array.
+  - **What was discarded (~3.3 MB of 3.4 MB)** — the App shell (`app.js`, a reduced copy of callflows'
+    own), `metadata/` (including `app.json` with its `api_url` of `http://10.26.0.41:8000/v2`, which
+    therefore needed no scrub), `README.md`, `LICENSE`, `.gitattributes`, 9 dead callflows-fork views
+    (`callflow-manager.html`, `callflowList.html`, `node.html`, `rowNumber.html`, …), all 43 images
+    (every one already present in `callflows/style/static/images/`), and `style/icons.css`
+    (byte-identical to callflows'). Upstream's `views/entity-list.html` is likewise byte-identical to
+    callflows', and its `oldResources`, `node` and `callflowsApp` i18n subtrees are exact subsets of
+    (or identical to) callflows' own — so nothing of them was imported. Because the sole
+    `oldResources` reference sat inside the stripped node half, no i18n repointing was needed.
+  - **Licensing: the MIT notice was deliberately dropped.** Upstream ships a real `LICENSE` (MIT,
+    Copyright (c) 2021 Emmanuel Balogun) — unlike every other entry here, which was either
+    byte-identical to this repository's MPL-1.1 `LICENSE` (`switchboard`, `parkinglot`, `webhooks`)
+    or absent entirely (`recordings`, `callcenter`). No `LICENSE` file and no per-file MIT header
+    were carried into this repository; the upstream license is recorded here as provenance only.
+    Recorded loudly because MIT's one substantive term is that its notice travel with copies, and a
+    reader should be able to find that this was a deliberate call rather than an oversight.
+  - **The callflow-node half of each submodule was stripped.** Each submodule registered *two* things
+    through `callflows.fetchActions`: an entity-manager tab (the `listEntities` / `editEntity`
+    contract that `callflows/app.js:379` consumes) and a callflow action node
+    (`globalresource[id=*]` / `localresource[id=*]`). The node half is broken as shipped — its `edit`
+    renders `getTemplate({ name: 'callflowEdit', submodule: 'globalresource' })` and **no such file
+    exists in the upstream repository**, its `tip` key is `undefined` in upstream i18n, and
+    `module: 'globalresource'` is not a callflow module anything here speaks (callflows' own
+    `resource` submodule uses `offnet` and `resources`). Per ADR-0008 it was removed rather than
+    repaired: the node properties (`icon`, `category`, `tip`, `data`, `rules`, `isUsable`, `weight`,
+    `caption`, `edit`), the `*PopupEdit` handler, its `callflows.resource.popupEdit` subscription
+    (which nothing in this repository publishes), and the `*List` helper that only the node path
+    called. Each file went 638 → ~500 lines. Dropping `category` is the framework's own mechanism:
+    `callflows/app.js:2142` builds the editor palette from entries having a `category` and `:1335`
+    gates child actions on `isUsable`, so these entries are invisible to the callflow editor while
+    the entity manager still lists them. The registry keys were left in upstream's node syntax
+    (`'globalresource[id=*]'`) rather than renamed — they are inert, and keeping them keeps the diff
+    against upstream readable.
+  - **One publish that was dead upstream is now live.** Both submodules publish
+    `callflows.user.popupEdit` (line 332 upstream). Nothing subscribed to it while the App stood
+    alone; inside callflows, `submodules/user/user.js:12` does, and six sibling submodules (`misc`,
+    `faxbox`, `conference`, `vmbox`, `callcenter`, `device`) publish it identically. This is the
+    clearest evidence the code was written to live here.
+  - **The Global Resource gate deviates from upstream, deliberately.** Upstream hid the tab behind
+    `currentAccount.is_reseller && currentAccount.superduper_admin && currentUser.priv_level ===
+    'admin' && currentUser.enabled`, evaluated in its own `app.js`/`layout.html` (whose else-branch
+    rendered a hardcoded, un-i18n'd English "Local Resource" tab). That shell was discarded, so the
+    gate was reimplemented inside `globalResourceDefineActions` as
+    `monster.util.isReseller() && monster.util.isSuperDuper() && monster.util.isAdmin()` — the helpers
+    two sibling callflows submodules already use (`timeofday.js:484`, `temporalset.js:254`). These
+    read `originalAccount`, not `currentAccount`, so **the tab now survives masquerading** where
+    upstream's did not. `localresource` registers unconditionally, as upstream intended. Keeping the
+    gate inside the submodule leaves `callflows/app.js` and `views/layout.html` untouched.
+  - **The twins were imported as twins.** `globalresource.js` and `localresource.js` differ only in
+    global/local naming and which SDK resource they call; their `general_edit.html` views are
+    byte-identical. Collapsing them into one parameterized submodule is a blind refactor of ~1,000
+    lines against no live backend and would erase the line-for-line traceability this entry depends
+    on, so it was left for a follow-up issue — the same reasoning ADR-0007 applies to Common Control
+    consolidation.
+  - **40 upstream lint errors were left in place, faithfully** (quotes, `key-spacing`, `eqeqeq`,
+    trailing spaces, a missing semicolon, …). None is a build-blocker or a bug, so per ADR-0007 they
+    were not fixed; `master` reports 2,757 problems and this branch 2,797, the entire delta inside
+    the two imported files.
+  - **Verification is partial, and the gaps are real.** Static audit came back clean: `node --check`
+    passes on both files; all ten SDK resources resolve in `jquery.kazoosdk.js`; all 108 `i18n.resources.*`
+    references across the imported JS and views resolve against the merged i18n; every Handlebars
+    helper the views use is registered (`ifInArray` at `monster.ui.js:142`); and every template the
+    code requests now exists (`callflowEdit`, the one that did not, went out with the node half).
+    `gulp build-dev` completes and emits both submodules and the merged i18n to `dist/`. What could
+    **not** be verified:
+    - **Nothing has been rendered against a live backend.** `auth` gates the UI at a login screen, so
+      neither the entity-manager tabs nor the resource editor has ever run in this repository. Treat
+      first deployment as the real test.
+    - **The gate has never been observed firing for either user class** — neither a superduper-admin
+      reseller (tab present) nor anyone else (tab absent), and the masquerading behavior change above
+      is likewise unexercised.
+    - **`gulp build-prod` does not complete on `master` at all** — the pre-existing, repo-wide
+      breakage filed as **#23**, unrelated to this change.
