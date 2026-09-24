@@ -59,6 +59,8 @@ code and on disk is `recordings`; *Recordings* is its display label. It is a com
 shortened from its upstream `recordings-community`. Its email feature depends on a separate
 server-side **receiver** (see ADR-0007), which is deployment infrastructure, not part of the
 build.
+Where the recordings it lists are physically stored is not its own concern: that is decided by
+the Account's **Storage Plan**.
 _Avoid_: "recordings-community" as the App's code identity; "Recordings" for the Callflow-level
 call-recording action or the raw Crossbar recordings endpoint
 
@@ -105,6 +107,8 @@ to another box). The App's identity in code and on disk is `voicemails`; *Voicem
 display label. It is a 2600Hz App shipping no declared license. It manages the *contents* of
 Voicemail Boxes; creating and configuring the boxes themselves belongs to the **voip** App's
 `vmboxes` **Submodule** — the same division of labor **Callcenter** has against `callflows`.
+Where the message audio it plays is physically stored is decided by the Account's **Storage
+Plan**, which this App surfaces through the `storagePlanManager` **Common Control**.
 _Avoid_: "Voicemails" for a single **Voicemail Message** or for the **Voicemail Box** that holds
 them; using this App's name for the box-configuration UI in voip
 
@@ -159,6 +163,20 @@ for why an entry created in one App may look wrong in the other.
 _Avoid_: "addressbooks" in user-facing copy; "Contacts" or "Directory" (**Directory** is a
 distinct `callflows` **Submodule** and a distinct Kazoo document type); using this App's name for
 the **List** documents it edits, or for the `callflows` `lists` Submodule that edits them too
+
+**Storage Engine Management**:
+The App for managing an **Account**'s **Storage Attachments** — creating one from a provider's
+credentials (bucket, key, secret), editing and deleting it, and marking one as the account
+default, which writes it into three **Storage Plan** entries at once (call recordings, voicemail
+media, and account media). The App's identity in code and on disk is `storagemgmt`; *Storage
+Engine Management* is its display label. It is a community App (CONVERBA LIMITED, 2019) licensed
+MPL-2.0, vendored in-tree. It is a fork of this framework's own `storageSelector` and
+`storagePlanManager` **Common Controls** and overlaps them: those can *select* an existing
+Attachment and assign it to a plan, but neither can create one, which is the gap this App fills.
+The overlap is deliberate and permanent — see `docs/vendored-apps.md`.
+_Avoid_: "storagemgmt" in user-facing copy; "Storage Engine" as a term of its own (Kazoo's word is
+**Storage Handler**); using this App's name for the **Storage Plan** or **Storage Attachment** it
+edits, or for the Common Controls it forked
 
 **Apploader**:
 The launcher UI that lists the Apps a user may open and switches between them.
@@ -294,13 +312,33 @@ An Account that resells service to descendant Accounts and owns their Whitelabel
 _Avoid_: partner, distributor, agency
 
 **Storage Plan**:
-An Account's configuration for where Kazoo physically stores its attachments — per data type
-(voicemail media as `mailbox_message`, faxes, call recordings), pointing either at Kazoo's own
-storage or at an external provider. A server-side document on the Crossbar `storage` endpoint; an
-Account may have none at all, which is why storage UI appears conditionally. Edited through the
-`storagePlanManager` **Common Control**.
-_Avoid_: storage (bare), storage settings, attachment config, using "Storage Plan" for the Common
-Control that edits it
+An Account's mapping from data type (voicemail media as `mailbox_message`, faxes, call recordings,
+account media) to the **Storage Attachment** that receives it — the `plan` half of the document on
+the Crossbar `storage` endpoint. It decides *where each kind of media goes*; it holds no
+credentials of its own, only a reference to an Attachment. An Account may have no plan at all,
+which is why storage UI appears conditionally. Two things edit it: the `storagePlanManager`
+**Common Control**, one plan entry at a time, and the **Storage Engine Management** App's "set
+default", which writes three entries at once.
+_Avoid_: storage (bare), storage settings, attachment config; using "Storage Plan" for the
+**Storage Attachment** it points at, or for either UI that edits it
+
+**Storage Attachment**:
+A named, credentialed destination Kazoo can write media to — a **Storage Handler** plus its
+settings (for S3: bucket, key, secret), stored under a generated UUID in the `attachments` half of
+the Account's document on the Crossbar `storage` endpoint. An Attachment is *where media can go*;
+a **Storage Plan** entry is what decides which media actually goes there. Created, edited and
+deleted only by the **Storage Engine Management** App; the `storageSelector` **Common Control**
+can pick an existing one but cannot make one.
+_Avoid_: using "attachment" bare — in Kazoo the word also means the stored media file itself (a
+recording, a voicemail), and this is the *destination*, not the file; storage, provider, bucket
+
+**Storage Handler**:
+The kind of storage backend Kazoo dispatches on — the `handler` field of a **Storage Attachment**,
+with values such as `s3` or `google_drive`. Distinct from the provider tile a UI shows: **Storage
+Engine Management** offers an "MTS" tile that is a preset writing `handler: "s3"` against an
+MTS-specific host, so the Attachment it creates is an S3 one and displays as `s3` afterwards. Name
+the Handler for what Kazoo stores and dispatches on, not for the brand a user clicked.
+_Avoid_: provider, backend, engine, driver; treating a UI provider tile as though it were a Handler
 
 ### Call handling
 

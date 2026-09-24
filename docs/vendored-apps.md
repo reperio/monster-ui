@@ -693,3 +693,121 @@ entries are recorded in this same list and marked as imports.
     What was **not** verified: nothing has been rendered against a live backend, so no screen and in
     particular none of the write paths — photo upload, CSV import, vCard export — has ever executed.
     Given the 2018 vintage, the oldest here, treat first deployment as the real test.
+- **`storagemgmt`** (display label **Storage Engine Management**) —
+  `kazoo-classic/monster-ui-storagemgmt@acc34b29020036f1b77f50c97e83fb91bf70fa2c` (`master` tip,
+  2019-06-16, the repository's only branch). A **community App** by CONVERBA LIMITED: the
+  account-level editor for Kazoo **Storage Attachments** — create one from a provider's bucket/key/
+  secret, edit it, delete it, or mark it the account default. Unlike `apiexplorer`/`recordings`/
+  `switchboard`/`parkinglot`, upstream ships its source *nested* at `src/apps/storagemgmt/`, so that
+  directory was copied straight across. No `api_url` scrub was needed — it is the empty string `""`
+  upstream. Its `app.json` `name` is already the clean `storagemgmt`, so no App-identity rename sweep
+  was required; only the display label diverges from the code identity. It carries **no
+  framework-level third-party dependency**: it builds against the shared set (`jquery`, `monster`,
+  `toastr`) plus `monster.ui.generateAppLayout`/`confirm`/`alert`/`getFormData` and jQuery UI's
+  `tabs` (already in the shared `jquery-ui-1.10.3.custom.js` build), so the shared vendor set was
+  left unchanged. All four Crossbar resources it calls — `storage.get`/`.add`/`.update`/`.patch` —
+  were **already present** in the shared Kazoo SDK (`src/js/lib/jquery.kazoosdk.js:491`), so the SDK
+  was not touched either. Standalone-repo infra dropped: `gulpfile-build-app.js`, `package.json`,
+  `.gitignore`, and the root `LICENSE`; the README was rewritten to the vendored form.
+  - **The first App vendored here that forks a Common Control rather than an App.** This is a 2019
+    fork of *this framework's own* `common/submodules/storagePlanManager` and
+    `common/submodules/storageSelector`. The evidence is direct: its `views/field-path.html` was a
+    byte-copy of `storagePlanManager/views/field-path.html` with one i18n namespace swapped, and it
+    reuses that control's `storage-provider-wrapper`/`storage-choice`/`logo-header`/`right-section`/
+    `storage-name` class names throughout. It was nonetheless **vendored as an App, not imported**
+    under ADR-0008: that path is gated on forking an App this repo vendors *and* being written
+    against that App's seams, and this App is written against neither — it talks straight to the SDK
+    and carries its own layout, tab and messaging machinery. ADR-0007's vendoring rules were
+    extended with a sentence recording that reading, so the next reader does not re-derive it.
+  - **The overlap is deliberate and permanent.** `storageSelector` can *pick* an existing Attachment
+    and `storagePlanManager` can assign one to a plan entry (the `voicemails` App consumes it), but
+    **nothing in this tree could create an Attachment** — that gap is what this App fills. Its "set
+    default" does overlap `storagePlanManager`, writing `plan.modb.types.call_recording`,
+    `plan.modb.types.mailbox_message` and `plan.account.types.media` in one PATCH. Consolidating the
+    two onto one control was explicitly considered and **rejected as a goal**: this App is being
+    taken as an operator-facing product tile (`tags: ["reseller"]`), so the duplication stands
+    indefinitely rather than as a staging post. ADR-0007's "ship duplicated functionality as-is"
+    rule, and the `pbxs`/`common.numbers` precedent, govern.
+  - **License: the first vendored App whose grant diverges from the parent — and the file was
+    dropped anyway.** Upstream ships a real 373-line **MPL-2.0** `LICENSE` (corroborated by
+    `package.json`'s `"Mozilla Public License Version 2.0"`) against this repository's **MPL-1.1**.
+    That made it neither redundant with the parent (the `switchboard`/`parkinglot` case) nor unbacked
+    (the `addressbooks` case). It was dropped regardless, keeping every vendored App free of its own
+    `LICENSE` file, and `metadata/app.json`'s `license` was **left at its upstream `"-"`** — no edit
+    was needed. Nothing is lost: the grant is verifiable at the pinned commit above, MPL is
+    file-level copyleft so MPL-2.0 sources sit in an MPL-1.1 tree without a combined-work problem,
+    and the actual license is recorded here and in the App's `CONTEXT.md` entry — the same split
+    `addressbooks` already uses, where the glossary names a license the `app.json` does not.
+  - **Dropped the pre-built `style/app.css`, keeping `style/app.scss`.** Upstream shipped both, the
+    `.css` being output from its own `gulpfile-build-app.js` (deleted with the rest of the
+    standalone infra). Discarding a build artifact of a build system being removed is the same call
+    as removing the build system; the repo's convention is `.scss` alone (60 of them; `clean-move.js`
+    excludes `.scss` from dist and `compileSass` builds them), and the two were verified equivalent
+    before the `.css` was dropped.
+  - **Dropped two pieces of unreferenced fork residue**: `views/field-path.html` (rendered by
+    nothing, and its sole i18n key `storagemgmt.pathPlaceholder` was absent from `en-US.json` too)
+    and `style/static/images/mts.svg` (referenced by no view, stylesheet or script — the MTS tile
+    uses `submodules/mts/img/logo.png`). ADR-0007's rule that `metadata/icon`/`screenshots` are
+    always kept turns on the **App Document** referring to them, which does not extend to an asset
+    nothing refers to.
+  - **Five inline changes**, the `switchboard`/`recordings`/`callcenter` precedent:
+    1. **One build-blocker.** `app.js:439` declared `storageManagerMakeConfig (…) {` — an ES6
+       shorthand method, the file's only ES6 construct — which the app-build minifier (`gulp-uglify`
+       2.1.2, resolving UglifyJS **2.8.29**, ES5-only) cannot parse: `minifyJsApp` failed with
+       `Unexpected token: punc (()` though `node --check` passed. Converted to
+       `storageManagerMakeConfig: function(…) {`. Exactly the `switchboard` failure, at one line
+       instead of twenty-five.
+    2. **Two convention fixes.** `const CONFIG` → `var CONFIG` in `submodules/s3/s3.js` and
+       `submodules/mts/mts.js`. Not build-blockers — `minifyJsApp` globs only `app.js`, so submodule
+       JS is never minified — but the repo's ES5-app gate is stated over all of an App's JS, and
+       leaving them would hand the next person running it a false positive.
+    3. **Folded the submodule i18n in and deleted the mechanism.** Upstream fetched per-submodule
+       i18n over HTTP at render time (`extendI18nOfSubmodule` → `$.getJSON('/apps/storagemgmt/
+       submodules/<name>/i18n/<lang>.json')`), a non-framework arrangement: `monster.apps.js` loads
+       only `<appPath>/i18n/<lang>.json`, and `common`'s own submodules keep their strings in the
+       App's single file. The four live `s3` labels moved into `i18n/en-US.json` under
+       `storagemgmt.submodules.s3`; both submodule `i18n/` directories were deleted, along with
+       `extendI18nOfSubmodule` and the whole chain that existed only to feed it — `render()`'s
+       `fetchStorages` callback, both `args.callback(CONFIG)` calls, and `CONFIG.i18n`.
+       `CONFIG.submoduleName`, the `subscribe` topic and the `storages` registry were kept: that is
+       the part doing real work. `mts`'s own i18n file was **dead on arrival** (its
+       `formElements.html` reads the `s3` keys) and was not carried across. This is the largest
+       departure from a faithful copy here and it has a price, recorded in the App's `README.md`: a
+       third party adding a provider now edits the App's central i18n file.
+    4. **Deleted both dead `.dynamic-link` rules** from `app.scss`. The class is emitted by no view,
+       no line of `app.js`, and nothing in the framework, yet one rule was declared **unscoped** — and
+       because `concatAllCss` merges every App's `style/*.css` into one global `style.css`, it applied
+       UI-wide, including to `callcenter`'s `.dynamic-link`s (which scope theirs under
+       `#cc-settings`). The practical symptom was nil, since `callcenter` already sets that same
+       `border-bottom`, but the leak was real. Deleting rules that provably cannot match is a smaller
+       change than rescoping them.
+    5. **Dropped the leading slash from both submodule logos.** `submodules/{s3,mts}/views/logo.html`
+       hardcoded `src="/apps/storagemgmt/…"`; the tree's convention is root-relative *without* the
+       slash (`apps/pbxs/style/static/images/…`, `apps/auth/style/static/images/…`, `css/assets/…`),
+       which survives a non-root deploy. With this and (3), the App now contains **no absolute paths
+       at all** — those two `<img>` tags and the deleted `$.getJSON` were the only three.
+  - **Faithful-copy oddities left in place and flagged.** (a) The `mts` submodule is a **preset, not
+    a handler**: it writes `handler: "s3"` with a hardcoded `settings.host` of `s3.cloud.mts.ru`, so
+    nothing unsupported reaches Crossbar — but because the list is rendered from the stored
+    `handler`, an MTS-created Attachment comes back as type `s3` and the MTS logo is visible only on
+    the creation tab. Kept whole (ADR-0007's ship-as-is rule); this is why `CONTEXT.md` now carries a
+    **Storage Handler** entry separating what Kazoo dispatches on from what a UI tile shows. (b)
+    `app.js:32` subscribes `'storagemgmt.fetchStorages': 'define_storage_nodes'` — **a handler that
+    does not exist** anywhere in the App. `monster.sub` tolerates it (`console.warn`s "The topic …
+    does not have a callback" and returns), the submodules' own subscriptions to the same topic do
+    the real work, and nothing user-facing breaks, so it is neither a build-blocker nor an outright
+    bug; it emits one console warning per App load. (c) `.icon-loader` is likewise global and dead,
+    but collides with nothing and was left. (d) `render()` does
+    `$(document.body).addClass('storagemgmt-app')` and never removes it, so the App's body-scoped
+    rules persist after navigating away.
+  - **Verification.** `node --check` passes on all four JS files; the ES5 gate passes twice over
+    (no arrow functions, `let`/`const`, template literals or shorthand methods remain, and all four
+    files minify clean under the pinned UglifyJS 2.8.29); both JSON files parse; all **24** i18n
+    references across `app.js` and the six remaining views resolve against the App's own `en-US.json`
+    plus the core i18n the framework merges in; `gulp build-app --app storagemgmt` completes clean
+    through `minifyJsApp` and `minifyCssApp` (with `app.scss` compiling to `dist/apps/storagemgmt/
+    style/app.css` and both submodules' templates precompiled into the bundle), as does the repo-wide
+    `gulp build-dev`. What was **not** verified: nothing has been rendered against a live backend, so
+    no screen and in particular none of the write paths — create, edit, delete, set-default — has
+    ever executed, and no Attachment has ever been round-tripped through Kazoo. At a 2019 vintage,
+    second-oldest here after `addressbooks`, treat first deployment as the real test.
