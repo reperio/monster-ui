@@ -69,7 +69,14 @@ rather than habits inferred from reading the register:
   its faithful-copy guarantee — so it requires its own ADR recording why, and it is not to be
   reached for merely because two Apps overlap. **ADR-0008** is the first and so far only instance
   (the `resources` App imported into `callflows`); the rules above continue to govern every App
-  vendored as an App.
+  vendored as an App. Read the gate narrowly: it opens only where the upstream forks
+  *an App this repository vendors* **and** is written against that App's own seams. An upstream
+  that instead forks one of the framework's **Common Controls** does not qualify — a Common
+  Control has no App to import into, and such a fork typically talks straight to the **Kazoo
+  SDK** while carrying its own layout and view machinery, so nothing about it is written against
+  the seams of anything here. Vendor it as an App and record the overlap. `storagemgmt`, a 2019
+  fork of the `storageSelector` and `storagePlanManager` Common Controls, is the first case
+  decided this way.
 
 ## Provenance
 
