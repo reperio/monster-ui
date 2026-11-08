@@ -43,12 +43,12 @@ consumer at all, so a substantial slice of `common/submodules/numbers` (the acco
 accountBrowser integration) was dormant. Activating it is the reason this 60-line shell earns a
 place in the tree.
 
-**`common` reaches into this App's DOM — do not remove the `#number_manager` id.**
-`common/submodules/numbers/numbers.js:452` re-renders after adding an external number via
+**`common` no longer reaches into this App's DOM.** The Common Control used to re-render after
+importing Phone Numbers (the "Add External Numbers" action) via
 `self.numbersRender({ container: $('#number_manager') })`, a hardcoded global id that only
-`views/app.html` supplies. It is reachable only from the `manager` view. That coupling is
-backwards and is tracked as issue #22 — but until it is fixed, this App's view is what makes that
-line work.
+`views/app.html` supplied — so this App's choice of id was silently load-bearing. Issue #22 fixed
+that in `common`: the Common Control now re-renders into the `container` it was given. The
+`#number_manager` id is still used, but only by this App's own stylesheet.
 
 **"External" means two different things in the Common Control.** The third view is labelled
 *Caller ID Numbers* and is backed by the Crossbar `external_numbers` endpoint — numbers proven by

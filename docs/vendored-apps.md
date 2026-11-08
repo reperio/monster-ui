@@ -379,7 +379,7 @@ entries are recorded in this same list and marked as imports.
     flip-flop. Note it also inverts `callflows`, where the `kazoo-classic` fork was genuinely
     *ahead*. The lesson is that neither upstream is reliably newer — compare the trees each time.
   - **It makes a dangling selector in `common` load-bearing — see issue #22.**
-    `common/submodules/numbers/numbers.js:452` re-renders after adding an external number by
+    `common/submodules/numbers/numbers.js:452` (pre-#22) re-renders after adding an external number by
     reaching for a hardcoded global id, `self.numbersRender({ container: $('#number_manager') })`.
     That id is supplied by exactly one thing in this repository: this App's `views/app.html`.
     Before this App was vendored the selector matched nothing and the handler silently failed to
@@ -390,7 +390,9 @@ entries are recorded in this same list and marked as imports.
     App, and mixing an unrelated `common` fix into a vendoring change destroys the
     auditable-diff guarantee just as surely as editing the App would. Flagged loudly because
     anyone tidying that global selector out of `common` would break this App with nothing in the
-    diff to explain why.
+    diff to explain why. **Since fixed (#22):** the handler now re-renders into the Common Control's own
+    `container`, so the id is no longer load-bearing for `common`; only this App's stylesheet
+    still uses it.
   - **Verification is partial, and the gaps are real.** Static audit of the manager-only code
     paths came back clean: all 17 Crossbar resources `common/submodules/numbers` calls resolve
     under their own namespace in `src/js/lib/jquery.kazoosdk.js`; all 71 i18n references in its
