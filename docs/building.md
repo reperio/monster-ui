@@ -10,6 +10,7 @@ Monster UI's build system is powered by `gulp`. It provides build management com
 - [`build-app`](#build-app)
 - [`build-prod`](#build-prod)
 - [`serve-prod`](#serve-prod)
+- [`size-report`](#size-report)
 
 ## `lint`
 
@@ -173,4 +174,29 @@ gulp serve-prod [options]
 
 ```shell
 gulp serve-prod
+```
+
+## `size-report`
+
+Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per App and per framework/vendor stylesheet. It also lists the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
+
+Rows are measured standalone, using the same transpile step and minifiers as the build, so their gzip sizes don't add up exactly to the gzip of the whole file. The report prints the attributed total next to the actual size. Run `build-prod` first.
+
+##### Synopsis
+
+```shell
+gulp size-report [options]
+```
+
+##### Options
+
+```shell
+--json file    Also write the raw numbers to a JSON file
+--top n        Rows per table (default: 25)
+```
+
+##### Examples
+
+```shell
+gulp build-prod && gulp size-report --silent --top 100
 ```

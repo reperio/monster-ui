@@ -2,6 +2,7 @@ import { serve, watch } from './gulp/tasks/server.js';
 import gulp from 'gulp';
 import require from './gulp/tasks/require.js';
 import writeVersion from './gulp/tasks/write-version.js';
+import sizeReport from './gulp/tasks/size-report.js';
 import { lint, minifyJs, minifyJsApp } from './gulp/tasks/javascript.js';
 import { templates, templatesApp } from './gulp/tasks/templates.js';
 import { compileSass, css, minifyCssApp } from './gulp/tasks/style.js';
@@ -53,6 +54,7 @@ gulp.task('build-dev', buildDev);
 gulp.task('serve-dev', gulp.series(buildDev, serve, watch));
 gulp.task('build-prod', buildProd);
 gulp.task('serve-prod', gulp.series(buildProd, serve));
+gulp.task('size-report', sizeReport);
 gulp.task('build-all', gulp.series(buildDev, moveDistDev, buildProd));
 
 export default gulp.series('serve-dev');
