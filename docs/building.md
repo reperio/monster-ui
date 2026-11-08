@@ -129,7 +129,7 @@ Runs a production build for the framework, including the following tasks:
 
 - compile SCSS into CSS
 - compile templates into JS
-- resolve modules dependencies
+- resolve modules dependencies, transpiling bundled first-party sources to ES5 ([ADR-0009](adr/0009-transpile-bundled-sources-to-es5.md))
 - minify JS/CSS
 - generate build config
 
