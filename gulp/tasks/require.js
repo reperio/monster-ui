@@ -6,6 +6,7 @@ import vinylPaths from 'vinyl-paths';
 import { require, tmp } from '../paths.js';
 import { env, getProApps, getAppsToInclude } from '../helpers/helpers.js';
 import { cleanTmp } from './clean-move.js';
+import { onBuildRead } from '../helpers/transpile.js';
 
 const standardFilesToExclude = [
 	'config',
@@ -111,6 +112,20 @@ const getConfigRequire = () => ({
 	 * @type {String}
 	 */
 	optimize: 'none',
+	/**
+	 * Down-level first-party sources to ES5 before r.js's esprima parses them
+	 * and before gulp-uglify minifies the bundle; neither understands ES2015+.
+	 * @type {Function}
+	 */
+	onBuildRead: onBuildRead(require),
+	/**
+	 * With `optimize: 'none'` the per-file pass over the whole directory is a
+	 * no-op, except that it would also feed every non-bundled `.js` file (e.g.
+	 * JSON data fetched over XHR) through `onBuildRead`. Skip it so only
+	 * bundled modules are transpiled; everything else is copied verbatim.
+	 * @type {Boolean}
+	 */
+	skipDirOptimize: true,
 	modules: env.hasOwnProperty('app')
 		? [
 			{

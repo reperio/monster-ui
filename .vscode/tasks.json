@@ -21,7 +21,7 @@
 			"label": "gulp (dev server)",
 			"detail": "Install deps, build Monster UI, and serve it at http://localhost:3000/ (node 14)",
 			"type": "shell",
-			"command": "gulp",
+			"command": "${workspaceFolder}/node_modules/gulp/bin/gulp.js",
 			"options": {
 				"env": {
 					"PATH": "${env:HOME}/.nvm/versions/node/v14.21.3/bin:${env:PATH}"

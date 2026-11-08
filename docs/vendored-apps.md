@@ -10,6 +10,11 @@ infrastructure, the `api_url` scrub, license handling, any growth of the shared 
 any inline fix or faithful-copy oddity deliberately left in place. Add a new App to the end of
 the list when it is vendored.
 
+Entries vendored before [ADR-0009](adr/0009-transpile-bundled-sources-to-es5.md) record ES5 checks
+and conversions, and some note that `gulp build-prod` did not complete on `master`. Both are
+historical. The production build now transpiles bundled App code to ES5, and CI runs it, so a new
+App no longer needs an ES5 check or conversion.
+
 Most entries are Apps vendored under `src/apps/<name>/`. One is not: under the second path added
 to ADR-0007's vendoring rules, an upstream App that is really a fork of an App already vendored
 here may instead be *imported* into that App as submodules, which requires its own ADR. Such

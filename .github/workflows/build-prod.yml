@@ -1,0 +1,28 @@
+# Runs the production build on every PR and push to master.
+#
+# `build-dev` copies sources verbatim, so syntax the production toolchain
+# cannot handle (r.js's esprima, the ES5-only gulp-uglify) only surfaces here.
+# See docs/adr/0009-transpile-bundled-sources-to-es5.md.
+name: build-prod
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  build-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npx gulp build-prod
