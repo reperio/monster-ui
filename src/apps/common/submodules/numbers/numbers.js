@@ -81,7 +81,7 @@ define(function(require) {
 					dataNumbers: data
 				});
 
-				self.numbersBindEvents(numbersView, data);
+				self.numbersBindEvents(numbersView, data, container);
 
 				container
 					.empty()
@@ -218,7 +218,7 @@ define(function(require) {
 			return templateData;
 		},
 
-		numbersBindEvents: function(parent, dataNumbers) {
+		numbersBindEvents: function(parent, dataNumbers, container) {
 			var self = this,
 				listType = dataNumbers.viewType && dataNumbers.viewType === 'manager' ? 'full' : 'partial',
 				listSearchedAccounts = [ self.accountId ],
@@ -449,7 +449,13 @@ define(function(require) {
 
 			parent.on('click', '.account-header .action-number.add-external', function(e) {
 				self.numbersAddExternalNumbers($(this).parents('.account-section').data('id'), function() {
-					self.numbersRender({ container: $('#number_manager') });
+					// Re-render into this Common Control's own container, not a consumer's DOM id.
+					// callbackAfterRender is deliberately not re-run: the Common Control is already
+					// placed, and the numbers App's callback empties its parent on each call.
+					self.numbersRender({
+						container: container,
+						viewType: dataNumbers.viewType
+					});
 				});
 			});
 
