@@ -3,8 +3,8 @@
 	"initialLoad": {
 		"js/main.js": { "rawKB": 3700, "gzipKB": 870 },
 		"js/templates.js": { "rawKB": 2950, "gzipKB": 310 },
-		"css/style.css": { "rawKB": 1100, "gzipKB": 170 },
-		"total": { "rawKB": 7700, "gzipKB": 1340 }
+		"css/style.css": { "rawKB": 1000, "gzipKB": 160 },
+		"total": { "rawKB": 7600, "gzipKB": 1330 }
 	},
 	"apps": {}
 }
