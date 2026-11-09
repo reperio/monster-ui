@@ -1,0 +1,10 @@
+{
+	"$comment": "Size budget checked by `gulp size-budget` in the build-prod CI job, in KB (1024 bytes) of emitted output. Lower an entry to measured, rounded up to the next 10 KB gzip / 50 KB raw, whenever a PR shrinks it; raise one only in a PR that says why. See docs/building.md#size-budget.",
+	"initialLoad": {
+		"js/main.js": { "rawKB": 3700, "gzipKB": 870 },
+		"js/templates.js": { "rawKB": 2950, "gzipKB": 310 },
+		"css/style.css": { "rawKB": 1100, "gzipKB": 170 },
+		"total": { "rawKB": 7700, "gzipKB": 1340 }
+	},
+	"apps": {}
+}

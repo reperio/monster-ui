@@ -26,3 +26,10 @@ jobs:
 
       - name: Production build
         run: npx gulp build-prod
+
+      # Fails when the Initial Load trio is over size-budget.json; per-App caps
+      # only warn. The table goes to the job summary. See docs/building.md#size-budget.
+      - name: Size budget
+        run: |
+          npx gulp size-report --silent --json size-report.json > /dev/null
+          npx gulp size-budget --report size-report.json

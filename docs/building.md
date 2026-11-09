@@ -10,6 +10,8 @@ Monster UI's build system is powered by `gulp`. It provides build management com
 - [`build-app`](#build-app)
 - [`build-prod`](#build-prod)
 - [`serve-prod`](#serve-prod)
+- [`size-report`](#size-report)
+- [`size-budget`](#size-budget)
 
 ## `lint`
 
@@ -174,3 +176,69 @@ gulp serve-prod [options]
 ```shell
 gulp serve-prod
 ```
+
+## `size-report`
+
+Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per App and per framework/vendor stylesheet. It also lists the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
+
+Rows are measured standalone, using the same transpile step and minifiers as the build, so their gzip sizes don't add up exactly to the gzip of the whole file. The report prints the attributed total next to the actual size. Run `build-prod` first.
+
+##### Synopsis
+
+```shell
+gulp size-report [options]
+```
+
+##### Options
+
+```shell
+--json file    Also write the raw numbers to a JSON file
+--top n        Rows per table (default: 25)
+```
+
+The JSON holds `initialLoad`, which `size-budget` checks: the emitted raw and gzip (zlib level 6) size of each **Initial Load** file and their total. It also holds `apps`, the emitted `app.js` + `style/app.css` of each App built as its own bundle, plus the per-row breakdown. Sizes are in bytes.
+
+##### Examples
+
+```shell
+gulp build-prod && gulp size-report --silent --top 100
+```
+
+## `size-budget`
+
+Checks a `size-report --json` report against `size-budget.json` at the repo root. The `build-prod` CI job runs it after every production build.
+
+- It **fails** when any **Initial Load** file (`js/main.js`, `js/templates.js`, `css/style.css`) or their total is over its raw or gzip budget.
+- It **warns** when a Lazy App's bundle is over its cap in `apps`. Per-App caps never fail the build. An App with a cap but no bundle of its own isn't checked.
+- It flags any entry 20 KB gzip or more under its budget with "lower it".
+
+In GitHub Actions the results become annotations and the measured-vs-budget table goes to the job summary. Locally both are printed.
+
+##### Synopsis
+
+```shell
+gulp size-budget --report file [options]
+```
+
+##### Options
+
+```shell
+--report file    The JSON written by `size-report --json` (required)
+--budget file    Budget to check against (default: size-budget.json)
+```
+
+##### Examples
+
+```shell
+gulp build-prod
+gulp size-report --silent --json size-report.json
+gulp size-budget --report size-report.json
+```
+
+##### The ratchet
+
+`size-budget.json` holds sizes in KB (1024 bytes), per **Initial Load** file and for the total, raw and gzip. The `apps` map holds the per-App caps.
+
+- **Lower it** whenever a PR shrinks the output: set the entry to the new measured size, rounded **up** to the next 10 KB gzip / 50 KB raw. Do it in the same PR. CI doesn't force this, but it flags any entry 20 KB gzip or more under its budget.
+- **Raise it** only in a PR that says why. Growth should be a decision, not drift.
+- A Lazy App's cap is seeded from its first measured bundle plus ~10%.

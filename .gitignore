@@ -5,3 +5,4 @@ tmp/
 
 # Dependency directory
 node_modules/
+size-report.json

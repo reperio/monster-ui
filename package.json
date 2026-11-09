@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node -r babel-register gulp/helpers/size-budget.test.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,7 @@
     "@babel/core": "^7.29.13",
     "@babel/preset-env": "^7.29.7",
     "@fomantic/gulp-concat-css": "^3.2.0",
+    "acorn": "^8.8.2",
     "babel-core": "^6.26.3",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
