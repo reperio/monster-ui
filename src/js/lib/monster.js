@@ -634,7 +634,8 @@ define(function(require) {
 				getBuildConfig = _.partial(_.pick, _, [
 					'type',
 					'preloadedApps',
-					'proApps'
+					'proApps',
+					'cacheKeys'
 				]);
 
 			monster.parallel({
@@ -665,6 +666,14 @@ define(function(require) {
 				monster.config.developerFlags.build = _.merge({}, results.buildFile, {
 					version: results.version
 				});
+
+				// build-prod keys every lazily required file to its content hash
+				// (docs/deployment.md); register them before anything requires one.
+				var requirePaths = _.get(results.buildFile, 'cacheKeys.requirePaths');
+				if (!_.isEmpty(requirePaths)) {
+					// The global require: this module's local one has no `config`.
+					window.require.config({ paths: requirePaths });
+				}
 
 				callback && callback(monster.config.developerFlags.build);
 			});

@@ -4,7 +4,7 @@
  *
  * `preloadedApps` must name exactly the Apps whose code, views and CSS are
  * already in the Initial Load trio (main.js, templates.js, style.css): the
- * loader never fetches a listed App's `app.css` or `VERSION`, so listing an App
+ * loader never fetches a listed App's `app.css`, so listing an App
  * that is not in the trio leaves it unstyled, and leaving out one that is makes
  * it re-fetch assets it already has.
  *

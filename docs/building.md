@@ -141,7 +141,7 @@ The **Initial Load** (`js/main.js`, `js/templates.js`, `css/style.css`) carries 
 - `apps/<name>/style/*.css`: minified, each with its `@import`s inlined, so vendor CSS that only one App uses (bootstrap-tour in `callflows`) travels with that App. It loads after `style.css`, so it wins cascade ties.
 
 A library that several Lazy Apps use but `js/main.js` doesn't carry (today: DataTables) goes in `libsSharedByApps` in `gulp/tasks/require.js`. It then loads once, as its own file. The build prints a warning naming any library it finds bundled into more than one App. A library that a Preloaded App's Submodule requires (today: isotope, for `common`'s `appSelector`) goes in `libsInMain`, because r.js can't trace Submodules into `js/main.js`.
-- key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and RequireJS fetches carry `v=<release id>`
+- key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and each App and lazily required file gets its own hash through the `cacheKeys` manifest in `build-config.json` (see [Deployment](deployment.md))
 
 The output of the build is located at `/dist`. Cache a URL long only when its `v` key is one of these hashes, and serve the rest (`index.html`, `build-config.json` and `VERSION` included) no-cache. See [Deployment](deployment.md).
 

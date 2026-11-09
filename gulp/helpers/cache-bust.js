@@ -1,17 +1,18 @@
 import { createHash } from 'crypto';
-import { readdirSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'upath';
 import { parse } from 'acorn';
 
 /**
  * Cache keys for the production build (see docs/deployment.md).
  *
- * `src/js/main.js` busts every RequireJS fetch with a timestamp, which dev
- * keeps. `build-prod` rewrites the built copy instead: `urlArgs` becomes
- * `v=<release id>`, and `templates` gets a `paths` entry keyed to its own
- * content hash. A `paths` value containing `?` makes RequireJS skip the `.js`
- * suffix and append `urlArgs` with `&`, so the entry spells out `.js` itself
- * and templates.js ends up at `js/templates.js?v=<templates hash>&v=<release id>`.
+ * `src/js/main.js` busts every RequireJS fetch with a timestamp `urlArgs`,
+ * which dev keeps. `build-prod` drops it from the built copy and keys each
+ * file to its own content instead: `templates` through a `paths` entry in
+ * main.js, every App and lazy chunk through the `cacheKeys` manifest in
+ * build-config.json (`cacheManifest`). A `paths` value containing `?` makes
+ * RequireJS skip the `.js` suffix, so each entry spells out `.js` itself:
+ * `js/templates.js?v=<templates hash>`.
  */
 
 const keyName = property => property.key.type === 'Identifier'
@@ -48,19 +49,19 @@ const walk = (node, visit) => {
 };
 
 /**
- * The `require.config({...})` object that carries the `urlArgs` bust.
+ * The boot `require.config({ paths, … })` object from src/js/main.js.
  * @param  {String} source  Built main.js
  * @return {Object}  ObjectExpression node
  */
 const findBootConfig = source => {
 	const configs = [];
 	walk(parse(source, { ecmaVersion: 'latest' }), node => {
-		if (isRequireConfigCall(node) && findProperty(node.arguments[0], 'urlArgs')) {
+		if (isRequireConfigCall(node) && findProperty(node.arguments[0], 'paths')) {
 			configs.push(node.arguments[0]);
 		}
 	});
 	if (configs.length !== 1) {
-		throw new Error(`Expected exactly one require.config({ urlArgs }) call in main.js, found ${configs.length}`);
+		throw new Error(`Expected exactly one require.config({ paths }) call in main.js, found ${configs.length}`);
 	}
 	return configs[0];
 };
@@ -77,15 +78,32 @@ const applyEdits = (source, edits) => edits
 	.reduce((acc, { start, end, text }) => acc.slice(0, start) + text + acc.slice(end), source);
 
 /**
- * Keys the built main.js's RequireJS fetches to the release, and `templates`
- * to its own content hash.
+ * The source range that removes `property` from `objectNode`, with the comma
+ * that separates it from its neighbour.
+ * @param  {Object} objectNode  ObjectExpression
+ * @param  {Object} property  One of its properties
+ * @return {{start: Number, end: Number, text: String}}
+ */
+const removeProperty = (objectNode, property) => {
+	const { properties } = objectNode;
+	const index = properties.indexOf(property);
+	if (index < properties.length - 1) {
+		return { start: property.start, end: properties[index + 1].start, text: '' };
+	}
+	return index > 0
+		? { start: properties[index - 1].end, end: property.end, text: '' }
+		: { start: property.start, end: property.end, text: '' };
+};
+
+/**
+ * Drops the global `urlArgs` bust from the built main.js, so each file keeps
+ * its own key (see `cacheManifest`), and keys `templates` to its content hash.
  * @param  {String} source  Built (minified) main.js
  * @param  {Object} keys
- * @param  {String} keys.releaseId
  * @param  {String} keys.templatesHash
  * @return {String}  Rewritten main.js
  */
-export const injectRequireConfig = (source, { releaseId, templatesHash }) => {
+export const injectRequireConfig = (source, { templatesHash }) => {
 	const config = findBootConfig(source);
 	const urlArgs = findProperty(config, 'urlArgs');
 	const paths = findProperty(config, 'paths');
@@ -96,7 +114,7 @@ export const injectRequireConfig = (source, { releaseId, templatesHash }) => {
 	}
 
 	return applyEdits(source, [
-		{ start: urlArgs.value.start, end: urlArgs.value.end, text: JSON.stringify(`v=${releaseId}`) },
+		...(urlArgs ? [removeProperty(config, urlArgs)] : []),
 		{ start: templates.value.start, end: templates.value.end, text: JSON.stringify(`${templates.value.value}.js?v=${templatesHash}`) }
 	]);
 };
@@ -154,15 +172,17 @@ const listFiles = (dir, prefix = '') => readdirSync(dir, { withFileTypes: true }
 	}, []);
 
 /**
- * The release id: a content hash of every file under `dir`, path and bytes, in
- * a stable order. Any change to the build output (a renamed file included)
- * gives a new id; an identical build gives the same one.
+ * A content hash of every file under `dir`, path and bytes, in a stable order.
+ * Any change (a renamed file included) gives a new hash; an identical tree
+ * gives the same one.
  * @param  {String} dir
+ * @param  {Function} [ignore]  Relative path -> true to leave the file out
  * @return {String}  10 hex characters
  */
-export const hashTree = dir => {
+export const hashTree = (dir, ignore = () => false) => {
 	const hash = createHash('sha256');
 	listFiles(dir)
+		.filter(file => !ignore(file))
 		.sort()
 		.forEach(file => {
 			const content = readFileSync(join(dir, file));
@@ -170,4 +190,67 @@ export const hashTree = dir => {
 			hash.update(content);
 		});
 	return hash.digest('hex').slice(0, HASH_LENGTH);
+};
+
+/**
+ * What `moveBuiltFilesToDist` leaves out of dist (gulp/tasks/clean-move.js).
+ * @param  {String} file  Path relative to the App's folder
+ * @return {Boolean}
+ */
+const isUnshippedAppFile = file => file.startsWith('tests/') || file.endsWith('.scss');
+
+/**
+ * The string entries of main.js's `require.config` `paths`.
+ * @param  {String} source  main.js
+ * @return {Object}  Module ID (prefix) -> path without `.js`
+ */
+const readRequirePaths = source => {
+	const paths = findProperty(findBootConfig(source), 'paths');
+	return (paths && paths.value.type === 'ObjectExpression' ? paths.value.properties : [])
+		.filter(property => property.type === 'Property' && property.value.type === 'Literal' && typeof property.value.value === 'string')
+		.reduce((acc, property) => Object.assign(acc, { [keyName(property)]: property.value.value }), {});
+};
+
+/**
+ * The file RequireJS fetches for `moduleId`: the longest `paths` entry that is
+ * the ID or one of its `/` prefixes replaces that prefix, then `.js` is added.
+ * @param  {Object} paths
+ * @param  {String} moduleId
+ * @return {String}  Path relative to the build root
+ */
+const resolveModuleFile = (paths, moduleId) => {
+	const prefix = Object.keys(paths)
+		.filter(key => moduleId === key || moduleId.startsWith(`${key}/`))
+		.sort((a, b) => b.length - a.length)[0];
+	return `${prefix ? paths[prefix] + moduleId.slice(prefix.length) : moduleId}.js`;
+};
+
+/**
+ * The cache keys `build-prod` writes into build-config.json, read by the
+ * loader (src/js/lib/monster.apps.js).
+ * @param  {String} dir  Build tree, with the built js/main.js
+ * @param  {Object} options
+ * @param  {String[]} options.apps  Every App built
+ * @param  {String[]} options.chunks  Module IDs RequireJS fetches on their
+ *                                    own, after boot
+ * @return {{apps: Object, requirePaths: Object}}  `apps`: App name -> hash of
+ *         its shipped files. `requirePaths`: module ID -> `<file>.js?v=<hash>`,
+ *         ready for `require.config({ paths })`.
+ */
+export const cacheManifest = (dir, { apps, chunks }) => {
+	const paths = readRequirePaths(readFileSync(join(dir, 'js/main.js'), 'utf8'));
+	return {
+		apps: apps.reduce((acc, app) => Object.assign(acc, {
+			[app]: hashTree(join(dir, 'apps', app), isUnshippedAppFile)
+		}), {}),
+		requirePaths: chunks.reduce((acc, moduleId) => {
+			const file = resolveModuleFile(paths, moduleId);
+			if (!existsSync(join(dir, file))) {
+				throw new Error(`Lazy chunk ${moduleId} should be at ${file}, which the build doesn't have`);
+			}
+			return Object.assign(acc, {
+				[moduleId]: `${file}?v=${hashContent(readFileSync(join(dir, file)))}`
+			});
+		}, {})
+	};
 };
