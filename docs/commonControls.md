@@ -7,6 +7,9 @@ title: Using a Common control
 ### Folder Structure
 The **Common Controls** are located in the `monster-ui/apps/common/submodules` folder. Each one of them contains a JavaScript file and a CSS file specific to this **Common Control**.For the [internationalization][i18n], the files are in the `monster-ui/apps/common/i18n` and are common to all **Common Controls**. The views are in the `monster-ui/apps/common/views` folder and follow this naming convention: `{COMMON_CONTROL}-{VIEW}` in [CamelCase][camelcase] (example: accountDowpdown-listLayout). The `app.js` and `app.css` located in the `monster-ui/apps/common` folder 'enable' the **Common Controls**. The first file list all active controls in the `submodules` array contained in the `app` object. The second file import the CSS file relative to each **Common Controls**.
 
+### Loading
+Most **Common Controls** load the first time one of their `common.*` topics is published ([ADR-0010](adr/0010-common-controls-load-on-first-publish.md)): a stub subscriber fetches the control, then publishes the topic again for it. Publishing works the same as before, but on that first use the control renders after `monster.pub` has returned. Do any DOM work on what the control renders in its callbacks, not right after `pub`. A control that the framework or a Preloaded App publishes, or that a caller needs rendered synchronously, belongs in the eager core (`eagerCores` in `gulp/helpers/helpers.js`), which loads at start.
+
 ### Subscribe to a **Common Control**
 To make it possible to an application to subscribe to a **Common Control**, follow the steps described in the [sub/pub documentation][sub].
 

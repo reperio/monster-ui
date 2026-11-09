@@ -1,4 +1,4 @@
-define(function() {
+define(['monster-lazy-submodules'], function(lazySubModules) {
 	var $ = require('jquery'),
 		_ = require('lodash'),
 		monster = require('monster');
@@ -783,13 +783,30 @@ define(function() {
 							monster.sub(topic, cb, app);
 						});
 
-						callback(null);
+						callback(null, module);
 					}, callback);
 				}, pathConfig.moduleRoot),
+				/**
+				 * Topic -> Submodule for the App's Submodules that load on first
+				 * publish (`lazySubModules` in build-config.json), limited to the
+				 * Submodules the App declares. Empty when the build has no map,
+				 * so every Submodule then loads at start.
+				 * @param  {Object} app
+				 * @return {Object}
+				 */
+				getLazyTopics = function getLazyTopics(app) {
+					return _.pickBy(
+						_.get(monster, ['config', 'developerFlags', 'build', 'lazySubModules', app.name], {}),
+						_.partial(_.includes, _.get(app, 'subModules', []))
+					);
+				},
 				loadSubModules = function loadSubModules(app, callback) {
+					var lazy = _.values(getLazyTopics(app));
+
 					monster.parallel(_
 						.chain(app)
 						.get('subModules', [])
+						.reject(_.partial(_.includes, lazy))
 						.map(function(subModule) {
 							return _.partial(requireSubModule, app, subModule);
 						})
@@ -797,6 +814,39 @@ define(function() {
 					, function(err) {
 						callback(err, app);
 					});
+				},
+				/**
+				 * Subscribes a stub to each lazy topic; the first publish loads
+				 * the Submodule (docs/adr/0010-common-controls-load-on-first-publish.md).
+				 * Runs once the App is monsterized, so a lazy Submodule's
+				 * `requests` are defined as it loads.
+				 * @param  {Object}   app
+				 * @param  {Function} callback
+				 */
+				stubLazySubModules = function stubLazySubModules(app, callback) {
+					lazySubModules.stubTopics({
+						topics: getLazyTopics(app),
+						subscribe: _.bind(monster.sub, monster),
+						unsubscribe: _.bind(monster.unsub, monster),
+						publish: _.bind(monster.pub, monster),
+						load: function(subModule, done) {
+							requireSubModule(app, subModule, function(err, module) {
+								if (err) {
+									return done(err);
+								}
+								_.each(module.requests, function(request, id) {
+									monster._defineRequest(id, request, app);
+								});
+								// Replay outside RequireJS's callback: it would catch a
+								// handler's exception and report it as a failed load.
+								_.defer(done, null);
+							});
+						},
+						onError: function(error, subModule) {
+							console.error('Could not load the ' + subModule + ' Submodule of ' + app.name, error);
+						}
+					});
+					callback(null, app);
 				},
 				/**
 				 * The App's cache key: in dev, a timestamp; for an App build-prod
@@ -842,7 +892,8 @@ define(function() {
 						maybeRetrieveBuildConfig,
 						applyConfig,
 						loadSubModules,
-						_.bind(self.monsterizeApp, self)
+						_.bind(self.monsterizeApp, self),
+						stubLazySubModules
 					], callback);
 				},
 				initializeApp = function initializeApp(app, callback) {

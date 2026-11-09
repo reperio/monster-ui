@@ -52,6 +52,17 @@ A shared UI widget or workflow exposed to Apps through pub/sub topics (typically
 `common` App), rather than imported directly.
 _Avoid_: widget, shared component, control
 
+**Eager Core**:
+The Submodules of `common` that load at start, with the App, because the framework or a
+**Preloaded App** publishes them, or a caller needs them rendered synchronously. Every other
+**Common Control** is a **Lazy Submodule**.
+_Avoid_: core submodules (confusable with the `core` App), preloaded submodules
+
+**Lazy Submodule**:
+A **Submodule** fetched the first time one of its topics is published, through a stub
+subscriber, rather than with its App. Today only `common` has them.
+_Avoid_: on-demand control, deferred submodule
+
 **SmartPBX**:
 The user-facing display label of the **voip** App — the hosted-PBX administration interface. The
 App's identity in code and on disk is `voip` (its `name`, its `src/apps/voip/` directory, the key

@@ -140,7 +140,13 @@ The **Initial Load** (`js/main.js`, `js/templates.js`, `css/style.css`) carries 
 - `apps/<name>/app.js`: one r.js layer, minified and transpiled, holding the App, all its Submodules (plus `submodules/pro` under `--pro`) and all its views. It leaves out everything `js/main.js` already has.
 - `apps/<name>/style/*.css`: minified, each with its `@import`s inlined, so vendor CSS that only one App uses (bootstrap-tour in `callflows`) travels with that App. It loads after `style.css`, so it wins cascade ties.
 
-A library that several Lazy Apps use but `js/main.js` doesn't carry (today: DataTables) goes in `libsSharedByApps` in `gulp/tasks/require.js`. It then loads once, as its own file. The build prints a warning naming any library it finds bundled into more than one App. A library that a Preloaded App's Submodule requires (today: isotope, for `common`'s `appSelector`) goes in `libsInMain`, because r.js can't trace Submodules into `js/main.js`.
+`common`'s Submodules load on their first publish ([ADR-0010](adr/0010-common-controls-load-on-first-publish.md)). Its eager core (`eagerCores` in `gulp/helpers/helpers.js`: `accountBrowser`, `cidNumber`, `numberFeaturesMenu`, `webphone`) is bundled into `js/main.js`, and its views go in `js/templates.js`. Every other `common` Submodule is built as its own chunk:
+
+- `apps/common/submodules/<name>/<name>.js`: one r.js layer, minified and transpiled, holding the Submodule and its views. It leaves out everything `js/main.js` already has, and is fetched the first time one of its `common.*` topics is published. Its CSS stays in `style.css`.
+
+`build-config.json` carries `lazySubModules`, the map from each lazy topic to its Submodule. The build reads it from each Submodule's `subscribe` keys, in `build-dev` too, so dev takes the same lazy path.
+
+A library that several Lazy Apps or chunks use but `js/main.js` doesn't carry (today: DataTables, papaparse) goes in `libsSharedByApps` in `gulp/tasks/require.js`. It then loads once, as its own file. The build prints a warning naming any library it finds bundled into more than one App bundle or chunk. A library that a Preloaded App's Submodule requires (today: isotope, for `common`'s `appSelector`) goes in `libsInMain`, because r.js can't trace Submodules into `js/main.js`.
 - key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and each App and lazily required file gets its own hash through the `cacheKeys` manifest in `build-config.json` (see [Deployment](deployment.md))
 
 The output of the build is located at `/dist`. Cache a URL long only when its `v` key is one of these hashes, and serve the rest (`index.html`, `build-config.json` and `VERSION` included) no-cache. See [Deployment](deployment.md).
@@ -187,7 +193,7 @@ gulp serve-prod
 
 ## `size-report`
 
-Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per Preloaded App and per framework/vendor stylesheet. It also lists each Lazy App's own bundle (`app.js` plus its `style/*.css`) and the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
+Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per Preloaded App and per framework/vendor stylesheet. It also lists each Lazy App's own bundle (`app.js` plus its `style/*.css`), each lazy Submodule chunk, the bytes `common` fetches at login outside the trio (reported, not budgeted), and the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
 
 Rows are measured standalone, using the same transpile step and minifiers as the build, so their gzip sizes don't add up exactly to the gzip of the whole file. The report prints the attributed total next to the actual size. Run `build-prod` first.
 

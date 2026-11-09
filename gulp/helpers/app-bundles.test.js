@@ -53,6 +53,31 @@ test('libraries kept in main.js for the Preloaded Apps\' loose Submodules are bu
 	assert.deepStrictEqual(main.include, ['isotope', 'apps/auth/app', 'apps/core/app']);
 });
 
+test('a Preloaded App\'s eager Submodules go into main.js and each lazy one gets its own chunk', () => {
+	const modules = build({
+		preloadedApps: ['common', 'core'],
+		lazyApps: ['voip'],
+		eagerSubmodulesOf: app => ({ common: ['webphone'] }[app] || []),
+		lazySubmodulesOf: app => ({ common: ['numbers', 'portWizard'] }[app] || [])
+	});
+	assert.deepStrictEqual(modules.map(module => module.name), [
+		'js/main',
+		'apps/common/submodules/numbers/numbers',
+		'apps/common/submodules/portWizard/portWizard',
+		'apps/voip/app'
+	]);
+	const [main, numbers] = modules;
+	assert.deepStrictEqual(main.include, [
+		'apps/common/app',
+		'apps/common/submodules/webphone/webphone',
+		'apps/core/app'
+	]);
+	assert.deepStrictEqual(numbers, {
+		name: 'apps/common/submodules/numbers/numbers',
+		exclude: ['js/main', 'config', 'templates', 'jsoneditor', 'datatables.net']
+	});
+});
+
 test('a pro Submodule on disk is bundled only for a pro App', () => {
 	const [, voip] = build({ submodulesOf: () => ['devices', 'pro'] });
 	assert.deepStrictEqual(voip.include, ['apps/voip/submodules/devices/devices']);
@@ -101,6 +126,31 @@ test('libraries bundled into a single App, and main.js or CSS layers, are not re
 	const singles = buildTxt.replace(/^apps\/callcenter\/app\.js[\s\S]*?\n\n/m, '')
 		.replace(/^apps\/apiexplorer\/app\.js[\s\S]*$/m, '');
 	assert.deepStrictEqual(findLibsInSeveralApps(singles), []);
+});
+
+test('a library bundled into several lazy Submodule chunks, or a chunk and an App, is reported with each layer that carries it', () => {
+	const chunks = [
+		'apps/common/submodules/portWizard/portWizard.js',
+		'----------------',
+		'js/vendor/papaparse-4.1.2.min.js',
+		'js/vendor/jszip.min.js',
+		'apps/common/submodules/portWizard/portWizard.js',
+		'',
+		'apps/common/submodules/csvUploader/csvUploader.js',
+		'----------------',
+		'js/vendor/papaparse-4.1.2.min.js',
+		'apps/common/submodules/csvUploader/csvUploader.js',
+		'',
+		'apps/voip/app.js',
+		'----------------',
+		'js/vendor/jszip.min.js',
+		'apps/voip/app.js',
+		''
+	].join('\n');
+	assert.deepStrictEqual(findLibsInSeveralApps(chunks), [
+		{ file: 'js/vendor/jszip.min.js', apps: ['common/portWizard', 'voip'] },
+		{ file: 'js/vendor/papaparse-4.1.2.min.js', apps: ['common/csvUploader', 'common/portWizard'] }
+	]);
 });
 
 let failed = 0;

@@ -6,7 +6,9 @@ import vinylPaths from 'vinyl-paths';
 import { require, tmp } from '../paths.js';
 import {
 	env,
+	getEagerSubmodules,
 	getLazyApps,
+	getLazySubmodules,
 	getPreloadedApps,
 	getProApps,
 	listSubmodules
@@ -36,10 +38,10 @@ export const libsToExcludeFromWhole = [
 ];
 
 /**
- * Libraries that several Lazy Apps use and main.js does not contain. Every
- * App bundle leaves them out, so each loads once, as its own file, on its
- * first `require()`. `build-prod` warns about any library it finds bundled
- * into more than one App: add it here.
+ * Libraries that several Lazy Apps or lazy Submodule chunks use and main.js
+ * does not contain. Every App bundle and chunk leaves them out, so each loads
+ * once, as its own file, on its first `require()`. `build-prod` warns about
+ * any library it finds bundled into more than one of them: add it here.
  * @type {Array}
  */
 export const libsSharedByApps = [
@@ -47,14 +49,16 @@ export const libsSharedByApps = [
 	'datatables.net-bs',
 	'datatables.net-buttons',
 	'datatables.net-buttons-bootstrap',
-	'datatables.net-buttons-html5'
+	'datatables.net-buttons-html5',
+	'papaparse' // common's csvUploader and portWizard
 ];
 
 /**
- * Libraries a Preloaded App's Submodule requires. Submodules are loaded by a
- * computed ID, so r.js never traces them into main.js; without this a Lazy App
- * that also uses the library would bundle it and `removeCombined` would delete
- * the file the Submodule fetches. Today: isotope, for common's appSelector.
+ * Libraries a Preloaded App's loose Submodule or lazy Submodule chunk requires.
+ * Submodules are loaded by a computed ID, so r.js never traces them into
+ * main.js; without this a Lazy App that also uses the library would bundle it
+ * and `removeCombined` would delete the file the Submodule fetches. Today:
+ * isotope, for common's appSelector.
  * @type {Array}
  */
 const libsInMain = [
@@ -110,6 +114,7 @@ const libsToExcludeFromApp = [
 	'moment-timezone',
 	'monster',
 	'monster-apps',
+	'monster-lazy-submodules',
 	'monster-routing',
 	'monster-socket',
 	'monster-timezone',
@@ -195,7 +200,9 @@ const getConfigRequire = () => ({
 				...libsToExcludeFromWhole
 			],
 			libsSharedByApps,
-			libsInMain
+			libsInMain,
+			eagerSubmodulesOf: getEagerSubmodules,
+			lazySubmodulesOf: app => getLazySubmodules(tmp, app)
 		})
 });
 
@@ -205,7 +212,7 @@ const getConfigRequire = () => ({
  */
 const warnLibsInSeveralApps = buildResponse => findLibsInSeveralApps(buildResponse)
 	.forEach(({ file, apps }) => {
-		console.warn(`warning: ${file} is bundled into ${apps.length} Apps (${apps.join(', ')}); add it to libsSharedByApps in gulp/tasks/require.js so it loads once`);
+		console.warn(`warning: ${file} is bundled into ${apps.length} App bundles or Submodule chunks (${apps.join(', ')}); add it to libsSharedByApps in gulp/tasks/require.js so it loads once`);
 	});
 
 const buildRequire = done => {

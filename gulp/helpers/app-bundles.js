@@ -1,8 +1,10 @@
 /**
  * How `build-prod` splits the code into r.js layers: one `js/main.js` that
- * bundles the framework and the Preloaded Apps, and one `apps/<name>/app.js`
- * per Lazy App. Each App bundle lands on the URL the loader already requests,
- * so the runtime needs no `bundles` config (see #35/#36).
+ * bundles the framework, the Preloaded Apps and their eager Submodules, one
+ * `apps/<name>/app.js` per Lazy App, and one chunk per lazy Submodule of a
+ * Preloaded App (docs/adr/0010-common-controls-load-on-first-publish.md). Each
+ * layer lands on the URL the loader already requests, so the runtime needs no
+ * `bundles` config (see #35/#36).
  */
 
 const appModule = app => `apps/${app}/app`;
@@ -22,7 +24,13 @@ const submoduleModule = (app, submodule) => `apps/${app}/submodules/${submodule}
  *                                              use; each loads once, as its own file
  * @param  {String[]} [options.libsInMain]  Libraries main.js must carry although
  *                                          r.js can't trace them there: a Preloaded
- *                                          App's loose Submodule requires them
+ *                                          App's loose Submodule or lazy chunk
+ *                                          requires them
+ * @param  {Function} [options.eagerSubmodulesOf]  Preloaded App -> Submodules
+ *                                                 bundled into main.js
+ * @param  {Function} [options.lazySubmodulesOf]  Preloaded App -> Submodules
+ *                                                each built as its own chunk,
+ *                                                loaded on first publish
  * @return {Object[]}
  */
 export const bundleModules = ({
@@ -32,18 +40,29 @@ export const bundleModules = ({
 	submodulesOf,
 	loadedSeparately,
 	libsSharedByApps,
-	libsInMain = []
+	libsInMain = [],
+	eagerSubmodulesOf = () => [],
+	lazySubmodulesOf = () => []
 }) => {
 	const proSubmodule = app => proApps.includes(app) ? [submoduleModule(app, 'pro')] : [];
+	const outsideMain = ['js/main', ...loadedSeparately, ...libsSharedByApps];
 	return [
 		{
 			name: 'js/main',
 			exclude: loadedSeparately,
-			include: preloadedApps.reduce((acc, app) => acc.concat(appModule(app), proSubmodule(app)), libsInMain)
+			include: preloadedApps.reduce((acc, app) => acc.concat(
+				appModule(app),
+				eagerSubmodulesOf(app).map(submodule => submoduleModule(app, submodule)),
+				proSubmodule(app)
+			), libsInMain)
 		},
+		...preloadedApps.reduce((acc, app) => acc.concat(lazySubmodulesOf(app).map(submodule => ({
+			name: submoduleModule(app, submodule),
+			exclude: outsideMain
+		}))), []),
 		...lazyApps.map(app => ({
 			name: appModule(app),
-			exclude: ['js/main', ...loadedSeparately, ...libsSharedByApps],
+			exclude: outsideMain,
 			include: submodulesOf(app)
 				.filter(submodule => submodule !== 'pro')
 				.map(submodule => submoduleModule(app, submodule))
@@ -66,24 +85,44 @@ export const parseBuildTxt = text => text
 	}), {});
 
 const APP_LAYER = /^apps\/([^/]+)\/app\.js$/;
+const CHUNK_LAYER = /^apps\/([^/]+)\/submodules\/([^/]+)\/\2\.js$/;
 
 /**
- * Files outside main.js that r.js bundled into more than one App layer, so
- * that every one of those Apps downloads its own copy. Each belongs in
- * `libsSharedByApps`.
+ * The layer's owner and the folder its own files live in, for an App bundle
+ * (`voip`) or a lazy Submodule chunk (`common/portWizard`); null for any other
+ * layer.
+ * @param  {String} output
+ * @return {{name: String, root: String}|null}
+ */
+const layerOwner = output => {
+	const app = output.match(APP_LAYER);
+	if (app) {
+		return { name: app[1], root: `apps/${app[1]}/` };
+	}
+	const chunk = output.match(CHUNK_LAYER);
+	return chunk
+		? { name: `${chunk[1]}/${chunk[2]}`, root: `apps/${chunk[1]}/submodules/${chunk[2]}/` }
+		: null;
+};
+
+/**
+ * Files outside main.js that r.js bundled into more than one App bundle or
+ * lazy Submodule chunk, so that each of them downloads its own copy. Each
+ * belongs in `libsSharedByApps`.
  * @param  {String} buildTxt  r.js's `build.txt`
- * @return {Array<{file: String, apps: String[]}>}  Sorted by file, Apps sorted
+ * @return {Array<{file: String, apps: String[]}>}  Sorted by file; `apps` are
+ *         the layers (`voip`, `common/portWizard`), sorted
  */
 export const findLibsInSeveralApps = buildTxt => {
 	const layers = parseBuildTxt(buildTxt);
 	const appsByFile = Object.keys(layers)
-		.filter(output => APP_LAYER.test(output))
+		.filter(output => layerOwner(output))
 		.reduce((acc, output) => {
-			const app = output.match(APP_LAYER)[1];
+			const { name, root } = layerOwner(output);
 			layers[output]
-				.filter(file => !file.startsWith(`apps/${app}/`))
+				.filter(file => !file.startsWith(root))
 				.forEach(file => {
-					acc[file] = (acc[file] || []).concat(app);
+					acc[file] = (acc[file] || []).concat(name);
 				});
 			return acc;
 		}, {});

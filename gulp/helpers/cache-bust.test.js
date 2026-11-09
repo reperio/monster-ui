@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import os from 'os';
 import { join } from 'upath';
-import { cacheManifest, hashContent, hashTree, injectRequireConfig, rewriteIndexHtml } from './cache-bust.js';
+import { cacheManifest, hashContent, hashTree, injectRequireConfig, lazyChunks, rewriteIndexHtml } from './cache-bust.js';
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
@@ -146,6 +146,26 @@ test('a chunk whose file the build no longer has fails the build', () => {
 		() => cacheManifest(buildTree(appFiles), { apps: [], chunks: ['datatables.net'] }),
 		/datatables\.net/
 	);
+});
+
+test('the lazily required modules are the separate libraries, each loose Preloaded-App Submodule and each lazy Submodule chunk, but not the eager core bundled into main.js', () => {
+	const chunks = lazyChunks({
+		libs: ['jsoneditor', 'datatables.net'],
+		preloadedApps: ['common', 'core'],
+		proApps: ['core'],
+		submodulesOf: app => ({
+			common: ['numbers', 'portWizard', 'webphone'],
+			core: ['alerts', 'pro']
+		}[app]),
+		eagerSubmodulesOf: app => ({ common: ['webphone'] }[app] || [])
+	});
+	assert.deepStrictEqual(chunks, [
+		'jsoneditor',
+		'datatables.net',
+		'apps/common/submodules/numbers/numbers',
+		'apps/common/submodules/portWizard/portWizard',
+		'apps/core/submodules/alerts/alerts'
+	]);
 });
 
 let failed = 0;

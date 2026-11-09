@@ -18,21 +18,27 @@ const keysTheLoaderReads = () => {
 	return match[1].match(/'[^']+'/g).map(key => key.slice(1, -1));
 };
 
-test('a prod build lists the Preloaded Apps under preloadedApps', () => {
-	const config = frameworkConfig('prod', ['auth', 'core', 'voip']);
+const lazySubModules = { common: { 'common.portWizard.render': 'portWizard' } };
+
+test('a prod build lists the Preloaded Apps under preloadedApps and the lazy Submodule topics under lazySubModules', () => {
+	const config = frameworkConfig('prod', ['auth', 'core', 'voip'], lazySubModules);
 	assert.deepStrictEqual(config, {
 		type: 'production',
-		preloadedApps: ['auth', 'core', 'voip']
+		preloadedApps: ['auth', 'core', 'voip'],
+		lazySubModules
 	});
 });
 
-test('a dev build preloads nothing', () => {
-	assert.deepStrictEqual(frameworkConfig('dev', ['auth', 'core']), { type: 'development' });
+test('a dev build preloads nothing but loads Submodules on first publish too', () => {
+	assert.deepStrictEqual(frameworkConfig('dev', ['auth', 'core'], lazySubModules), {
+		type: 'development',
+		lazySubModules
+	});
 });
 
 test('the loader reads every key a prod build writes', () => {
 	const readKeys = keysTheLoaderReads();
-	Object.keys(frameworkConfig('prod', ['core'])).forEach(key => {
+	Object.keys(frameworkConfig('prod', ['core'], lazySubModules)).forEach(key => {
 		assert.ok(readKeys.includes(key), `build-config.json key "${key}" is not read by monster.loadBuildConfig (reads: ${readKeys.join(', ')})`);
 	});
 });

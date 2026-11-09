@@ -17,8 +17,9 @@ import tildeImporter from 'node-sass-tilde-importer';
  *   - `js/main.js`      per App, framework core and vendor library
  *   - `js/templates.js` per App (and per submodule)
  *   - `css/style.css`   per Preloaded App vs framework/vendor CSS
- * and lists what ships outside them: each Lazy App's own bundle, loose
- * submodule JS, i18n.
+ * and lists what ships outside them: each Lazy App's own bundle, each lazy
+ * Submodule chunk, what `common` still fetches at login, loose submodule JS,
+ * i18n.
  *
  * Usage: `gulp build-prod && gulp size-report [--json <file>] [--top <n>]`
  *
@@ -263,6 +264,43 @@ const measureLoose = () => appNames().map(app => {
 
 const actual = file => sizes(readFileSync(join(dist, file), 'utf8'));
 
+const lazySubModules = () => JSON.parse(readFileSync(join(dist, 'build-config.json'), 'utf8'))
+	.lazySubModules || {};
+
+/**
+ * What a Preloaded App fetches at login outside the trio: its default i18n and
+ * every Submodule file that is neither in main.js nor a lazy chunk loaded on
+ * first publish (`lazySubModules` in build-config.json). Reported, not
+ * budgeted.
+ * @param  {String} app
+ * @return {Object}  `{ raw, gzip, files: { [file]: { raw, gzip } } }`
+ */
+const measureLoginFetches = app => {
+	const lazy = Object.values(lazySubModules()[app] || {});
+	const i18n = join('apps', app, 'i18n', 'en-US.json');
+	const files = listFiles(join(dist, 'apps', app, 'submodules'), /\.js$/)
+		.map(full => relative(dist, full))
+		.filter(file => !lazy.some(submodule => file === join('apps', app, 'submodules', submodule, `${submodule}.js`)))
+		.concat(existsSync(join(dist, i18n)) ? [i18n] : [])
+		.sort()
+		.reduce((sized, file) => Object.assign(sized, { [file]: actual(file) }), {});
+	return Object.assign(sumSizes(Object.values(files)), { files });
+};
+
+/**
+ * Each lazy Submodule chunk's emitted size, views and bundled libraries
+ * included.
+ * @return {Object}  `{ [app/submodule]: { raw, gzip } }`
+ */
+const measureLazySubmodules = () => {
+	const byApp = lazySubModules();
+	return Object.keys(byApp).sort().reduce((acc, app) => Array.from(new Set(Object.values(byApp[app])))
+		.sort()
+		.reduce((chunks, submodule) => Object.assign(chunks, {
+			[`${app}/${submodule}`]: actual(join('apps', app, 'submodules', submodule, `${submodule}.js`))
+		}), acc), {});
+};
+
 /**
  * Emitted size of each Lazy App's own bundle, for the per-App caps in
  * `size-budget.json`: its `app.js` (an r.js layer, Submodules and views
@@ -318,7 +356,7 @@ const groupTotals = (grouped, total) => table(
 const summary = (file, total, attributed) => `\`${file}\`: **${kb(total.raw)} KB raw / ${kb(total.gzip)} KB gzip** (attributed: ${kb(attributed.raw)} KB raw = ${pct(attributed.raw, total.raw)}, ${kb(attributed.gzip)} KB gzip standalone)`;
 
 const toMarkdown = (report, top) => {
-	const { main, templates, style, apps, loose, totals } = report;
+	const { main, templates, style, apps, lazySubmodules, commonAtLogin, loose, totals } = report;
 	const initial = sumSizes(Object.values(totals));
 	return [
 		'# Production bundle size report',
@@ -368,6 +406,17 @@ const toMarkdown = (report, top) => {
 				])
 		),
 		'',
+		'## Lazy Submodule chunks (each fetched on first publish)',
+		'',
+		`\`common\` fetches at login outside the trio: **${kb(commonAtLogin.raw)} KB raw / ${kb(commonAtLogin.gzip)} KB gzip** (${Object.keys(commonAtLogin.files).map(file => file.replace('apps/common/', '')).join(', ') || 'nothing'}). Reported, not budgeted.`,
+		'',
+		table(
+			['chunk', 'raw KB', 'gzip KB'],
+			Object.entries(lazySubmodules)
+				.sort((a, b) => b[1].raw - a[1].raw)
+				.map(([name, s]) => [name, kb(s.raw), kb(s.gzip)])
+		),
+		'',
 		'## Other files outside the trio (loaded on demand)',
 		'',
 		table(
@@ -400,6 +449,9 @@ const sizeReport = done => {
 			total: sumSizes(Object.values(totals))
 		},
 		apps: measureLazyApps(layers),
+		lazySubmodules: measureLazySubmodules(),
+		// Reported, not budgeted (#40).
+		commonAtLogin: measureLoginFetches('common'),
 		totals,
 		main: measureMain(layers),
 		templates: measureTemplates(),

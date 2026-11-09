@@ -53,6 +53,7 @@ require.config({
 		'moment-timezone': 'js/vendor/moment-timezone',
 		'monster': 'js/lib/monster',
 		'monster-apps': 'js/lib/monster.apps',
+		'monster-lazy-submodules': 'js/lib/monster.lazySubModules',
 		'monster-routing': 'js/lib/monster.routing',
 		'monster-socket': 'js/lib/monster.socket',
 		'monster-timezone': 'js/lib/monster.timezone',
