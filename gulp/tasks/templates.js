@@ -8,6 +8,7 @@ import del from 'del';
 import vinylPaths from 'vinyl-paths';
 import { app, tmp } from '../paths.js';
 import { getLazyApps, getPreloadedApps, mode } from '../helpers/helpers.js';
+import { sortByPath } from '../helpers/sort-by-path.js';
 
 const viewsOf = appDir => [
 	join(appDir, 'views', '*.html'),
@@ -69,6 +70,7 @@ const compileViews = (src, dest, concatName) => gulp
 			return declare.processNameByPath(newName);
 		}
 	}))
+	.pipe(sortByPath())
 	.pipe(concat(concatName))
 	.pipe(gulp.dest(dest));
 

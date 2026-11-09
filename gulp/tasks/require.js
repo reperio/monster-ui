@@ -26,7 +26,7 @@ const standardFilesToExclude = [
  * `findNestedDependencies` would otherwise pull into the bundle.
  * @type {Array}
  */
-const libsToExcludeFromWhole = [
+export const libsToExcludeFromWhole = [
 	'jsoneditor',
 	'pdfjs-dist/build/pdf',
 	'pdfjs-dist/build/pdf.worker',
@@ -42,7 +42,7 @@ const libsToExcludeFromWhole = [
  * into more than one App: add it here.
  * @type {Array}
  */
-const libsSharedByApps = [
+export const libsSharedByApps = [
 	'datatables.net',
 	'datatables.net-bs',
 	'datatables.net-buttons',

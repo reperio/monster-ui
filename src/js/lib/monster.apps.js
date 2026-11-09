@@ -798,21 +798,35 @@ define(function() {
 						callback(err, app);
 					});
 				},
-				loadVersion = _.partial(function(name, pathToFolder, callback) {
+				/**
+				 * The App's cache key: in dev, a timestamp; for an App build-prod
+				 * hashed (cacheKeys.apps in build-config.json), that hash, which
+				 * also keys its app.js; otherwise, e.g. an App deployed later with
+				 * build-app or served from elsewhere, its VERSION file.
+				 * @param  {String}   name
+				 * @param  {Object}   pathConfig  `directory` and `module` of the App
+				 * @param  {Boolean}  hasExternalUrlConfigured  Served from `source_url`
+				 * @param  {Function} callback  Called with `(null, version)`
+				 */
+				loadVersion = _.partial(function(name, pathConfig, hasExternalUrlConfigured, callback) {
 					var success = _.partial(_.ary(callback, 2), null),
 						successWithDynamicVersion = _.partial(success, _.toString(new Date().getTime()));
 
 					if (monster.isDev()) {
 						return successWithDynamicVersion();
 					}
-					var preloadedApps = _.get(monster, 'config.developerFlags.build.preloadedApps', []),
-						successWithFrameworkVersion = _.partial(success, monster.util.getVersion());
+					var contentHash = hasExternalUrlConfigured
+						? undefined
+						: _.get(monster, ['config', 'developerFlags', 'build', 'cacheKeys', 'apps', name]);
 
-					if (_.includes(preloadedApps, name)) {
-						return successWithFrameworkVersion();
+					if (_.isString(contentHash) && !_.isEmpty(contentHash)) {
+						require.config(
+							_.set({}, ['paths', pathConfig.module], pathConfig.directory + '/app.js?v=' + contentHash)
+						);
+						return success(contentHash);
 					}
 					$.ajax({
-						url: pathToFolder + '/VERSION',
+						url: pathConfig.directory + '/VERSION',
 						success: _.flow(
 							monster.parseVersionFile,
 							_.partial(_.get, _, 'version'),
@@ -820,7 +834,7 @@ define(function() {
 						),
 						error: successWithDynamicVersion
 					});
-				}, name, pathConfig.directory),
+				}, name, pathConfig, hasExternalUrlConfigured),
 				loadApp = function loadApp(callback) {
 					monster.waterfall([
 						loadVersion,
