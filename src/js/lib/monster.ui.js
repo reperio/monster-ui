@@ -12,10 +12,8 @@ define(function(require) {
 		Drop = require('drop'),
 		Clipboard = require('clipboard'),
 		moment = require('moment'),
-		SimpleMDE = require('simplemde'),
 		marked = require('marked'),
-		Popup = require('popup-redirect'),
-		JSONEditor = require('jsoneditor');
+		Popup = require('popup-redirect');
 
 	// Import for side effects only
 	require('chosen');
@@ -1589,11 +1587,18 @@ define(function(require) {
 		},
 
 		/**
-		 * Convert the 'target' in to Markdown editor
-		 * @param {jQuery} target - mandatory jQuery object
-		 * @param {Object} options - optional object to overwrite the default configs
+		 * Convert the 'target' in to Markdown editor. SimpleMDE is loaded on
+		 * first use, so the editor is handed to `callback` once it is ready.
+		 * @param {jQuery} $target - mandatory jQuery object
+		 * @param {Object} [options] - optional object to overwrite the default configs
+		 * @param {Function} callback - mandatory, called with the SimpleMDE instance
 		 */
-		markdownEditor: function($target, options) {
+		markdownEditor: function($target, options, callback) {
+			if (_.isFunction(options) && _.isUndefined(callback)) {
+				callback = options;
+				options = undefined;
+			}
+
 			if (!($target instanceof $)) {
 				throw TypeError('"$target" is not a jQuery object');
 			}
@@ -1602,12 +1607,18 @@ define(function(require) {
 				throw TypeError('"options" is not a plain object');
 			}
 
-			return new SimpleMDE(_.merge({
-				element: $target[0],
-				status: false,
-				autosave: false,
-				spellChecker: false
-			}, options));
+			if (!_.isFunction(callback)) {
+				throw TypeError('"callback" is not a function');
+			}
+
+			require(['simplemde'], function(SimpleMDE) {
+				callback(new SimpleMDE(_.merge({
+					element: $target[0],
+					status: false,
+					autosave: false,
+					spellChecker: false
+				}, options)));
+			});
 		},
 
 		/**
@@ -4249,18 +4260,24 @@ define(function(require) {
 	}
 
 	/**
-	 * Get the jsoneditor instance from the container as long as exists
+	 * Get the jsoneditor instance from the container as long as exists. It
+	 * waits on the same lazy load as `jsoneditor()`, so an editor created just
+	 * before this call is found once it is ready.
 	 * @param {jQuery} $target jsoneditor container
-	 * @return {JSONEditor | null}
+	 * @param {Function} callback called with the JSONEditor instance, or `null`
 	 */
-	function getJsoneditor($target) {
+	function getJsoneditor($target, callback) {
 		if (!($target instanceof $)) {
 			throw TypeError('"$target" is not a jQuery object');
 		}
 
-		var container = $target[0];
+		if (!_.isFunction(callback)) {
+			throw TypeError('"callback" is not a function');
+		}
 
-		return _.get(container, 'jsoneditor', null);
+		require(['jsoneditor'], function() {
+			callback(_.get($target[0], 'jsoneditor', null));
+		});
 	}
 
 	/**
@@ -4320,27 +4337,39 @@ define(function(require) {
 	}
 
 	/**
-	 * Create a new instance of jsoneditor
+	 * Create a new instance of jsoneditor. JSONEditor is loaded on first use,
+	 * so the editor is handed to `callback` once it is ready.
 	 * @param {jQuery} $target Contatiner to append the editor to
 	 * @param {Object} [options] Editor options
 	 * @param {Object} [options.json] JSON object to set in the editor as initial data
-	 * @return {JSONEditor} editor
+	 * @param {Function} callback called with the JSONEditor instance
 	 */
-	function jsoneditor($target, options) {
+	function jsoneditor($target, options, callback) {
+		if (_.isFunction(options) && _.isUndefined(callback)) {
+			callback = options;
+			options = undefined;
+		}
+
 		if (!($target instanceof $)) {
 			throw TypeError('"$target" is not a jQuery object');
 		}
 
-		var container = $target[0],
-			jsonObject = _.get(options, 'json', {}),
-			formattedOptions = _.merge({ mode: 'code' }, _.omit(options, ['json'])),
-			editor = new JSONEditor(container, formattedOptions);
+		if (!_.isFunction(callback)) {
+			throw TypeError('"callback" is not a function');
+		}
 
-		editor.set(jsonObject);
-		// Attach the instance to the container
-		container.jsoneditor = editor;
+		require(['jsoneditor'], function(JSONEditor) {
+			var container = $target[0],
+				jsonObject = _.get(options, 'json', {}),
+				formattedOptions = _.merge({ mode: 'code' }, _.omit(options, ['json'])),
+				editor = new JSONEditor(container, formattedOptions);
 
-		return editor;
+			editor.set(jsonObject);
+			// Attach the instance to the container
+			container.jsoneditor = editor;
+
+			callback(editor);
+		});
 	}
 
 	/**
