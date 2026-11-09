@@ -10,8 +10,8 @@ import { parse } from 'acorn';
  * keeps. `build-prod` rewrites the built copy instead: `urlArgs` becomes
  * `v=<release id>`, and `templates` gets a `paths` entry keyed to its own
  * content hash. A `paths` value containing `?` makes RequireJS skip the `.js`
- * suffix and append `urlArgs` with `&`, so templates.js ends up at
- * `js/templates?v=<templates hash>&v=<release id>`.
+ * suffix and append `urlArgs` with `&`, so the entry spells out `.js` itself
+ * and templates.js ends up at `js/templates.js?v=<templates hash>&v=<release id>`.
  */
 
 const keyName = property => property.key.type === 'Identifier'
@@ -97,7 +97,7 @@ export const injectRequireConfig = (source, { releaseId, templatesHash }) => {
 
 	return applyEdits(source, [
 		{ start: urlArgs.value.start, end: urlArgs.value.end, text: JSON.stringify(`v=${releaseId}`) },
-		{ start: templates.value.start, end: templates.value.end, text: JSON.stringify(`${templates.value.value}?v=${templatesHash}`) }
+		{ start: templates.value.start, end: templates.value.end, text: JSON.stringify(`${templates.value.value}.js?v=${templatesHash}`) }
 	]);
 };
 
