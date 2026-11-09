@@ -8,6 +8,7 @@ nav:
     - 'docs/api.md'
     - 'docs/appstore.md'
     - 'docs/building.md'
+    - 'docs/deployment.md'
     - 'docs/validation.md'
     - 'docs/internationalization.md'
   - 'Advanced Guides':

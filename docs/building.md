@@ -134,8 +134,9 @@ Runs a production build for the framework, including the following tasks:
 - resolve modules dependencies, transpiling bundled first-party sources to ES5 ([ADR-0009](adr/0009-transpile-bundled-sources-to-es5.md))
 - minify JS/CSS
 - generate build config
+- key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and RequireJS fetches carry `v=<release id>`
 
-The output of the build is located at `/dist`.
+The output of the build is located at `/dist`. Cache a URL long only when its `v` key is one of these hashes, and serve the rest (`index.html`, `build-config.json` and `VERSION` included) no-cache. See [Deployment](deployment.md).
 
 ##### Synopsis
 
