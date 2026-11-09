@@ -3,7 +3,7 @@
  *
  * Compares a `gulp size-report --json` report to `size-budget.json`:
  *   - the Initial Load trio (each file and the total) fails when over budget;
- *   - a Lazy App over its cap only warns;
+ *   - an App bundle over its per-App cap only warns;
  *   - anything 20 KB gzip or more under its budget is flagged "lower it".
  * See the `size-budget` section of docs/building.md for the ratchet rule.
  */
@@ -12,7 +12,8 @@ const KB = 1024;
 
 const METRICS = ['raw', 'gzip'];
 
-const TRIO = ['js/main.js', 'js/templates.js', 'css/style.css'];
+/** The Initial Load trio: the three bundles the budget covers. */
+export const INITIAL_LOAD_FILES = ['js/main.js', 'js/templates.js', 'css/style.css'];
 
 // A budget this far above the measured gzip size should be ratcheted down.
 const LOWER_IT_GZIP = 20 * KB;
@@ -46,7 +47,7 @@ const toSummary = entries => [
 	'| --- | ---: | ---: | ---: | ---: | --- |',
 	...entries.map(entry => `| ${entry.label} | ${kb(entry.measured.raw)} | ${kb(entry.budget.raw)} | ${kb(entry.measured.gzip)} | ${kb(entry.budget.gzip)} | ${status(entry)} |`),
 	'',
-	'Budgets live in `size-budget.json`. A trio entry over budget fails the build; a Lazy App over its cap only warns. See docs/building.md for when to lower or raise them.',
+	'Budgets live in `size-budget.json`. A trio entry over budget fails the build; an App bundle over its cap only warns. See docs/building.md for when to lower or raise them.',
 	''
 ].join('\n');
 
@@ -59,13 +60,13 @@ const toSummary = entries => [
  */
 export const checkBudget = (report, budget) => {
 	const budgeted = budget.initialLoad || {};
-	const unbudgeted = TRIO.concat('total')
+	const unbudgeted = INITIAL_LOAD_FILES.concat('total')
 		.filter(name => !budgeted[name])
 		.map(name => `${name} has no budget in size-budget.json`);
 	if (unbudgeted.length) {
 		return { failures: unbudgeted, warnings: [], lowerIt: [], summary: '' };
 	}
-	const trio = TRIO.map(name => ({
+	const trio = INITIAL_LOAD_FILES.map(name => ({
 		scope: 'initialLoad',
 		name,
 		label: `\`${name}\``,
@@ -73,8 +74,8 @@ export const checkBudget = (report, budget) => {
 		budget: fromKB(budgeted[name])
 	})).concat({
 		scope: 'initialLoad',
-		name: 'Initial Load total',
-		label: '**Initial Load total**',
+		name: 'Initial Load trio total',
+		label: '**Initial Load trio total**',
 		measured: report.initialLoad.total,
 		budget: fromKB(budgeted.total)
 	});
@@ -85,8 +86,8 @@ export const checkBudget = (report, budget) => {
 		.sort()
 		.map(name => ({
 			scope: 'app',
-			name: `${name} (Lazy App)`,
-			label: `${name} (Lazy App)`,
+			name: `${name} (App bundle)`,
+			label: `${name} (App bundle)`,
 			measured: measuredApps[name],
 			budget: fromKB(caps[name])
 		}));

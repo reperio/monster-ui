@@ -4,6 +4,7 @@ import { gzipSync } from 'zlib';
 import { parse } from 'acorn';
 import { dist, src } from '../paths.js';
 import { env } from '../helpers/helpers.js';
+import { INITIAL_LOAD_FILES } from '../helpers/size-budget.js';
 import { shouldTranspile, transpileToEs5 } from '../helpers/transpile.js';
 import nodeSass from 'node-sass';
 import tildeImporter from 'node-sass-tilde-importer';
@@ -20,7 +21,7 @@ import tildeImporter from 'node-sass-tilde-importer';
  * Usage: `gulp build-prod && gulp size-report [--json <file>] [--top <n>]`
  *
  * The JSON has `initialLoad` (each trio file's emitted raw and gzip size, and
- * their total) and `apps` (each Lazy App bundle), which `gulp size-budget`
+ * their total) and `apps` (each App bundled as its own `app.js`), which `gulp size-budget`
  * compares to `size-budget.json`, plus the per-contributor breakdown below.
  *
  * Method, per file:
@@ -268,7 +269,7 @@ const actual = file => sizes(readFileSync(join(dist, file), 'utf8'));
  * separately.
  * @return {Object} `{ [app]: { raw, gzip } }`
  */
-const measureLazyApps = () => appNames()
+const measureSeparatelyBundledApps = () => appNames()
 	.filter(app => existsSync(join(dist, 'apps', app, 'app.js')))
 	.reduce((acc, app) => Object.assign(acc, {
 		[app]: sumSizes(['app.js', 'style/app.css']
@@ -369,18 +370,16 @@ const toMarkdown = (report, top) => {
  */
 const sizeReport = done => {
 	const layers = parseBuildTxt(readFileSync(join(dist, 'build.txt'), 'utf8'));
-	const totals = {
-		'js/main.js': actual('js/main.js'),
-		'js/templates.js': actual('js/templates.js'),
-		'css/style.css': actual('css/style.css')
-	};
+	const totals = INITIAL_LOAD_FILES.reduce((acc, file) => Object.assign(acc, {
+		[file]: actual(file)
+	}), {});
 	const report = {
 		// What `gulp size-budget` checks: emitted sizes, never the row sums.
 		initialLoad: {
 			files: totals,
 			total: sumSizes(Object.values(totals))
 		},
-		apps: measureLazyApps(),
+		apps: measureSeparatelyBundledApps(),
 		totals,
 		main: measureMain(layers),
 		templates: measureTemplates(),

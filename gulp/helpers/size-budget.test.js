@@ -66,7 +66,7 @@ test('the trio total over budget fails even when every file is within', () => {
 	assert.match(result.failures[0], /total/);
 });
 
-test('a Lazy App over its cap only warns', () => {
+test('a per-App cap breach only warns', () => {
 	const result = checkBudget(
 		report({ apps: { voip: [200, 41] } }),
 		budget({ apps: { voip: [250, 40] } })
@@ -99,7 +99,7 @@ test('a file 19 KB gzip under budget is not flagged', () => {
 	assert.deepStrictEqual(result.lowerIt, []);
 });
 
-test('a Lazy App well under its cap is flagged to lower too', () => {
+test('an App bundle well under its cap is flagged to lower too', () => {
 	const result = checkBudget(
 		report({ apps: { voip: [200, 20] } }),
 		budget({ apps: { voip: [250, 40] } })
@@ -117,8 +117,8 @@ test('the summary has a measured-vs-budget row per checked entry, with its statu
 	assert.ok(lines.includes('| `js/main.js` | 3000.0 KB | 3000.0 KB | 501.0 KB | 500.0 KB | ❌ over budget |'), summary);
 	assert.ok(lines.includes('| `js/templates.js` | 1000.0 KB | 1000.0 KB | 80.0 KB | 100.0 KB | ⬇️ lower it |'), summary);
 	assert.ok(lines.includes('| `css/style.css` | 800.0 KB | 800.0 KB | 100.0 KB | 100.0 KB | ✅ |'), summary);
-	assert.ok(lines.includes('| **Initial Load total** | 4800.0 KB | 4800.0 KB | 681.0 KB | 700.0 KB | ✅ |'), summary);
-	assert.ok(lines.includes('| voip (Lazy App) | 260.0 KB | 250.0 KB | 40.0 KB | 40.0 KB | ⚠️ over cap |'), summary);
+	assert.ok(lines.includes('| **Initial Load trio total** | 4800.0 KB | 4800.0 KB | 681.0 KB | 700.0 KB | ✅ |'), summary);
+	assert.ok(lines.includes('| voip (App bundle) | 260.0 KB | 250.0 KB | 40.0 KB | 40.0 KB | ⚠️ over cap |'), summary);
 	assert.ok(!/callflows/.test(summary), summary);
 });
 

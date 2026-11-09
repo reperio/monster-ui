@@ -208,8 +208,8 @@ gulp build-prod && gulp size-report --silent --top 100
 
 Checks a `size-report --json` report against `size-budget.json` at the repo root. The `build-prod` CI job runs it after every production build.
 
-- It **fails** when any **Initial Load** file (`js/main.js`, `js/templates.js`, `css/style.css`) or their total is over its raw or gzip budget.
-- It **warns** when a Lazy App's bundle is over its cap in `apps`. Per-App caps never fail the build. An App with a cap but no bundle of its own isn't checked.
+- It **fails** when any **Initial Load** file (`js/main.js`, `js/templates.js`, `css/style.css`) or the trio's total is over its raw or gzip budget.
+- It **warns** when an App bundled as its own `app.js` is over its cap in `apps`. Per-App caps never fail the build. An App with a cap but no bundle of its own isn't checked.
 - It flags any entry 20 KB gzip or more under its budget with "lower it".
 
 In GitHub Actions the results become annotations and the measured-vs-budget table goes to the job summary. Locally both are printed.
