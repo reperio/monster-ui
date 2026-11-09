@@ -21,9 +21,25 @@ Apploader.
 _Avoid_: application, module, plugin
 
 **Base App**:
-An App that is always loaded, before any user-launched App — `auth` and `core`. Everything
-else is loaded on demand.
+An App that is always started, before any user-launched App: `auth` and `core`. Whether an
+App's code arrives with the **Initial Load** is a separate question, answered by **Preloaded
+App**.
 _Avoid_: system app, built-in app
+
+**Preloaded App**:
+An App whose code, views and styles arrive with the **Initial Load** instead of being fetched when
+it is first launched: the Base Apps plus `apploader` and `common`. Wider than **Base App**. Every
+Base App is preloaded, but not every Preloaded App is a Base App.
+_Avoid_: bundled app (every App is built, preloaded or not), included app
+
+**Lazy App**:
+Any App that is not a **Preloaded App**. It is fetched the first time it is launched.
+_Avoid_: on-demand app, external app, excluded app
+
+**Initial Load**:
+Everything the browser downloads before the Apploader or the first App renders. It is the main
+measure of how heavy Monster UI is to open.
+_Avoid_: bundle size (that's one file, not what the user waits for), first paint
 
 **Submodule**:
 A reusable slice of functionality nested inside an App (declared in the App's `subModules`
