@@ -3,11 +3,11 @@ import gulp from 'gulp';
 import concatCss from '@fomantic/gulp-concat-css';
 import cleanCss from 'gulp-clean-css';
 import { app, tmp } from '../paths.js';
-import { getAppsToInclude, sass } from '../helpers/helpers.js';
+import { getLazyApps, getPreloadedApps, sass } from '../helpers/helpers.js';
 
 const concatName = 'style.css';
 const cssDest = join(tmp, 'css');
-const concatCssPaths = getAppsToInclude().reduce((acc, item) => [
+const concatCssPaths = getPreloadedApps().reduce((acc, item) => [
 	...acc,
 	join(tmp, 'apps', item, 'style', '*.css')
 ], [
@@ -25,14 +25,30 @@ const minifyCss = () => gulp
 	.pipe(gulp.dest(cssDest));
 
 /**
+ * Minifies each Lazy App's own stylesheets (`style/*.css`, the files its `css`
+ * list makes the loader fetch at launch). r.js has already inlined their
+ * `@import`s, so vendor CSS that only one App uses (bootstrap-tour in
+ * callflows) is in that App's `app.css`, ahead of the App's own rules.
+ */
+const minifyCssLazyApps = () => gulp
+	.src(getLazyApps().map(item => join(tmp, 'apps', item, 'style', '*.css')), {
+		base: tmp
+	})
+	.pipe(cleanCss())
+	.pipe(gulp.dest(tmp));
+
+/**
  * concatAllCss
  * minifyCss
+ * minifyCssLazyApps
  *
- * Takes all the apps provided up top and concatenate and minify them
+ * Concatenates the framework's and the Preloaded Apps' CSS into style.css and
+ * minifies it, then minifies each Lazy App's stylesheets in place
  */
 export const css = gulp.series(
 	concatAllCss,
-	minifyCss
+	minifyCss,
+	minifyCssLazyApps
 );
 
 /**

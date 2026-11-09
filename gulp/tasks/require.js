@@ -4,9 +4,16 @@ import rjs from 'requirejs';
 import del from 'del';
 import vinylPaths from 'vinyl-paths';
 import { require, tmp } from '../paths.js';
-import { env, getProApps, getAppsToInclude } from '../helpers/helpers.js';
+import {
+	env,
+	getLazyApps,
+	getPreloadedApps,
+	getProApps,
+	listSubmodules
+} from '../helpers/helpers.js';
 import { cleanTmp } from './clean-move.js';
 import { onBuildRead } from '../helpers/transpile.js';
+import { bundleModules, findLibsInSeveralApps } from '../helpers/app-bundles.js';
 
 const standardFilesToExclude = [
 	'config',
@@ -28,6 +35,37 @@ const libsToExcludeFromWhole = [
 	'vfs_fonts'
 ];
 
+/**
+ * Libraries that several Lazy Apps use and main.js does not contain. Every
+ * App bundle leaves them out, so each loads once, as its own file, on its
+ * first `require()`. `build-prod` warns about any library it finds bundled
+ * into more than one App: add it here.
+ * @type {Array}
+ */
+const libsSharedByApps = [
+	'datatables.net',
+	'datatables.net-bs',
+	'datatables.net-buttons',
+	'datatables.net-buttons-bootstrap',
+	'datatables.net-buttons-html5'
+];
+
+/**
+ * Libraries a Preloaded App's Submodule requires. Submodules are loaded by a
+ * computed ID, so r.js never traces them into main.js; without this a Lazy App
+ * that also uses the library would bundle it and `removeCombined` would delete
+ * the file the Submodule fetches. Today: isotope, for common's appSelector.
+ * @type {Array}
+ */
+const libsInMain = [
+	'isotope'
+];
+
+/**
+ * Left out of the bundle `build-app` makes for a single App. `build-prod`
+ * excludes `js/main` from each App bundle instead.
+ * @type {Array}
+ */
 const libsToExcludeFromApp = [
 	'async',
 	'bootstrap',
@@ -147,26 +185,34 @@ const getConfigRequire = () => ({
 					: []
 			}
 		]
-		: [
-			{
-				name: join('js', 'main'),
-				exclude: [
-					...standardFilesToExclude,
-					...libsToExcludeFromWhole
-				],
-				include: getAppsToInclude().reduce((acc, item) => [
-					...acc,
-					join('apps', item, 'app'),
-					...(getProApps().includes(item)
-						? [join('apps', item, 'submodules', 'pro', 'pro')]
-						: [])
-				], [])
-			}
-		]
+		: bundleModules({
+			preloadedApps: getPreloadedApps(),
+			lazyApps: getLazyApps(),
+			proApps: getProApps(),
+			submodulesOf: app => listSubmodules(tmp, app),
+			loadedSeparately: [
+				...standardFilesToExclude,
+				...libsToExcludeFromWhole
+			],
+			libsSharedByApps,
+			libsInMain
+		})
 });
+
+/**
+ * Warns (never fails) about libraries that ended up in several App bundles.
+ * @param  {String} buildResponse  r.js's build.txt
+ */
+const warnLibsInSeveralApps = buildResponse => findLibsInSeveralApps(buildResponse)
+	.forEach(({ file, apps }) => {
+		console.warn(`warning: ${file} is bundled into ${apps.length} Apps (${apps.join(', ')}); add it to libsSharedByApps in gulp/tasks/require.js so it loads once`);
+	});
 
 const buildRequire = done => {
 	rjs.optimize(getConfigRequire(), function(buildResponse){
+		if (!env.hasOwnProperty('app')) {
+			warnLibsInSeveralApps(buildResponse);
+		}
 		done();
 	}, done);
 };

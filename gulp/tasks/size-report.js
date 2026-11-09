@@ -5,6 +5,7 @@ import { parse } from 'acorn';
 import { dist, src } from '../paths.js';
 import { env } from '../helpers/helpers.js';
 import { INITIAL_LOAD_FILES } from '../helpers/size-budget.js';
+import { parseBuildTxt } from '../helpers/app-bundles.js';
 import { shouldTranspile, transpileToEs5 } from '../helpers/transpile.js';
 import nodeSass from 'node-sass';
 import tildeImporter from 'node-sass-tilde-importer';
@@ -15,13 +16,14 @@ import tildeImporter from 'node-sass-tilde-importer';
  * Breaks the three initial-load files down by contributor:
  *   - `js/main.js`      per App, framework core and vendor library
  *   - `js/templates.js` per App (and per submodule)
- *   - `css/style.css`   per App vs framework/vendor CSS
- * and lists what ships outside them (loose submodule JS, i18n).
+ *   - `css/style.css`   per Preloaded App vs framework/vendor CSS
+ * and lists what ships outside them: each Lazy App's own bundle, loose
+ * submodule JS, i18n.
  *
  * Usage: `gulp build-prod && gulp size-report [--json <file>] [--top <n>]`
  *
  * The JSON has `initialLoad` (each trio file's emitted raw and gzip size, and
- * their total) and `apps` (each App bundled as its own `app.js`), which `gulp size-budget`
+ * their total) and `apps` (each Lazy App's `app.js` + `style/*.css`), which `gulp size-budget`
  * compares to `size-budget.json`, plus the per-contributor breakdown below.
  *
  * Method, per file:
@@ -34,8 +36,9 @@ import tildeImporter from 'node-sass-tilde-importer';
  *   - templates.js: the minified file is parsed, and each
  *     `this.monster.cache.templates.<app>.<sub>.<view> = Handlebars.template(…)`
  *     assignment is measured exactly as it appears in the real output.
- *   - style.css: per App, each `apps/<name>/style/*.css` (after r.js has
- *     inlined its `@import`s) goes through clean-css. For the framework, each
+ *   - style.css: per Preloaded App (`preloadedApps` in build-config.json),
+ *     each `apps/<name>/style/*.css` (after r.js has inlined its `@import`s)
+ *     goes through clean-css. For the framework, each
  *     file that `css/style.css` imports goes through clean-css too.
  *
  * gzip is zlib level 6 (the zlib/Node default), applied to each piece alone.
@@ -59,19 +62,6 @@ const sumSizes = rows => rows.reduce((acc, { raw, gzip }) => ({
 	raw: acc.raw + raw,
 	gzip: acc.gzip + gzip
 }), { raw: 0, gzip: 0 });
-
-/**
- * Parses r.js's `build.txt` into `{ [outputFile]: [inputFile, …] }`.
- * @param  {String} text
- * @return {Object}
- */
-const parseBuildTxt = text => text
-	.split(/\n\s*\n/)
-	.map(block => block.trim().split('\n'))
-	.filter(lines => lines.length > 2 && /^-+$/.test(lines[1]))
-	.reduce((acc, [output, , ...inputs]) => Object.assign(acc, {
-		[output]: inputs
-	}), {});
 
 const minifyJs = (code, file) => {
 	const transpiled = shouldTranspile(join(src, file), src)
@@ -224,6 +214,19 @@ const listFiles = (dir, pattern) => existsSync(dir)
 const appNames = () => readdirSync(join(dist, 'apps'))
 	.filter(name => statSync(join(dist, 'apps', name)).isDirectory());
 
+/**
+ * Top-level stylesheets in an App's `style/` folder: the files its `css`
+ * list makes the loader fetch, or that style.css concatenates.
+ * @param  {String} app
+ * @return {String[]}  Absolute paths
+ */
+const appStylesheets = app => listFiles(join(dist, 'apps', app, 'style'), /\.css$/)
+	.filter(full => dirname(full) === join(dist, 'apps', app, 'style'))
+	.sort();
+
+const preloadedApps = () => JSON.parse(readFileSync(join(dist, 'build-config.json'), 'utf8'))
+	.preloadedApps || [];
+
 const measureStyle = layers => {
 	const framework = (layers['css/style.css'] || [])
 		.filter(file => file !== 'css/style.css')
@@ -233,9 +236,8 @@ const measureStyle = layers => {
 				: file.startsWith('css/lib/') ? 'framework' : 'vendor';
 			return Object.assign({ file, group, name: file }, sizes(minifyCss(readCompiledCss(file))));
 		});
-	const apps = appNames().reduce((acc, app) => acc.concat(
-		listFiles(join(dist, 'apps', app, 'style'), /\.css$/)
-			.filter(full => dirname(full) === join(dist, 'apps', app, 'style'))
+	const apps = preloadedApps().reduce((acc, app) => acc.concat(
+		appStylesheets(app)
 			.map(full => Object.assign({
 				file: relative(dist, full),
 				group: 'app',
@@ -262,21 +264,25 @@ const measureLoose = () => appNames().map(app => {
 const actual = file => sizes(readFileSync(join(dist, file), 'utf8'));
 
 /**
- * Emitted size (`app.js` + `style/app.css`) of each App that ships its own
- * `app.js` in `dist/`, for the per-App caps in `size-budget.json`. Apps
- * bundled into `js/main.js` have none. Today only the Apps the build leaves
- * out (`demo_done`, `skeleton`) do; Lazy Apps will once they're bundled
- * separately.
- * @return {Object} `{ [app]: { raw, gzip } }`
+ * Emitted size of each Lazy App's own bundle, for the per-App caps in
+ * `size-budget.json`: its `app.js` (an r.js layer, Submodules and views
+ * included) plus every `style/*.css` it loads at launch.
+ * @param  {Object} layers  Parsed build.txt
+ * @return {Object} `{ [app]: { raw, gzip, files: { [file]: { raw, gzip } } } }`
  */
-const measureSeparatelyBundledApps = () => appNames()
-	.filter(app => existsSync(join(dist, 'apps', app, 'app.js')))
-	.reduce((acc, app) => Object.assign(acc, {
-		[app]: sumSizes(['app.js', 'style/app.css']
-			.map(file => join('apps', app, file))
-			.filter(file => existsSync(join(dist, file)))
-			.map(actual))
-	}), {});
+const measureLazyApps = layers => Object.keys(layers)
+	.map(output => output.match(/^apps\/([^/]+)\/app\.js$/))
+	.filter(Boolean)
+	.map(match => match[1])
+	.sort()
+	.reduce((acc, app) => {
+		const files = [join('apps', app, 'app.js')]
+			.concat(appStylesheets(app).map(full => relative(dist, full)))
+			.reduce((sized, file) => Object.assign(sized, { [file]: actual(file) }), {});
+		return Object.assign(acc, {
+			[app]: Object.assign(sumSizes(Object.values(files)), { files })
+		});
+	}, {});
 
 const kb = n => `${(n / 1024).toFixed(1)}`;
 const pct = (n, of) => `${((n / of) * 100).toFixed(1)}%`;
@@ -312,7 +318,7 @@ const groupTotals = (grouped, total) => table(
 const summary = (file, total, attributed) => `\`${file}\`: **${kb(total.raw)} KB raw / ${kb(total.gzip)} KB gzip** (attributed: ${kb(attributed.raw)} KB raw = ${pct(attributed.raw, total.raw)}, ${kb(attributed.gzip)} KB gzip standalone)`;
 
 const toMarkdown = (report, top) => {
-	const { main, templates, style, loose, totals } = report;
+	const { main, templates, style, apps, loose, totals } = report;
 	const initial = sumSizes(Object.values(totals));
 	return [
 		'# Production bundle size report',
@@ -348,7 +354,21 @@ const toMarkdown = (report, top) => {
 		'',
 		sizeTable('source', style.grouped, totals['css/style.css'], top),
 		'',
-		'## Outside the trio (loaded on demand today)',
+		'## Lazy Apps (each fetched on first launch)',
+		'',
+		table(
+			['App', 'files', 'raw KB', 'gzip KB'],
+			Object.entries(apps)
+				.sort((a, b) => b[1].raw - a[1].raw)
+				.map(([name, s]) => [
+					name,
+					Object.keys(s.files).map(file => file.replace(`apps/${name}/`, '')).join(', '),
+					kb(s.raw),
+					kb(s.gzip)
+				])
+		),
+		'',
+		'## Other files outside the trio (loaded on demand)',
 		'',
 		table(
 			['App', 'submodule .js files', 'submodule JS raw KB', 'gzip KB', 'i18n en-US raw KB', 'gzip KB'],
@@ -379,7 +399,7 @@ const sizeReport = done => {
 			files: totals,
 			total: sumSizes(Object.values(totals))
 		},
-		apps: measureSeparatelyBundledApps(),
+		apps: measureLazyApps(layers),
 		totals,
 		main: measureMain(layers),
 		templates: measureTemplates(),

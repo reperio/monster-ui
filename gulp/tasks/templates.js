@@ -7,29 +7,43 @@ import concat from 'gulp-concat';
 import del from 'del';
 import vinylPaths from 'vinyl-paths';
 import { app, tmp } from '../paths.js';
-import { env, getAppsToInclude, mode } from '../helpers/helpers.js';
+import { getLazyApps, getPreloadedApps, mode } from '../helpers/helpers.js';
 
+const viewsOf = appDir => [
+	join(appDir, 'views', '*.html'),
+	join(appDir, 'submodules', '*', 'views', '*.html')
+];
+
+/**
+ * Where each build's views come from and where they are compiled to. In a
+ * whole build, `templates.js` carries only the Preloaded Apps' views; each
+ * Lazy App's are folded into its own `app.js` (see `templatesLazyApps`).
+ */
 const pathsTemplates = {
 	whole: {
-		src: getAppsToInclude().reduce((acc, item) => acc.concat([
-			join(tmp, 'apps', item, 'views', '*.html'),
-			join(tmp, 'apps', item, 'submodules', '*', 'views', '*.html')
-		]), []),
+		src: getPreloadedApps().reduce((acc, item) => acc.concat(
+			viewsOf(join(tmp, 'apps', item))
+		), []),
 		dest: join(tmp, 'js'),
 		concatName: 'templates-compiled.js'
 	},
 	app: {
-		src: [
-			join(app, 'views', '*.html'),
-			join(app, 'submodules', '*', 'views','*.html')
-		],
+		src: viewsOf(app),
 		dest: join(app, 'views'),
 		concatName: 'templates.js'
 	}
 };
 
-const compileTemplates = () => gulp
-	.src(pathsTemplates[mode].src)
+/**
+ * Compiles views into one file of `monster.cache.templates.<app>…`
+ * assignments, the shape `monster.getTemplate` looks up before fetching.
+ * @param  {String[]} src  View globs
+ * @param  {String} dest
+ * @param  {String} concatName
+ * @return {Stream}
+ */
+const compileViews = (src, dest, concatName) => gulp
+	.src(src)
 	.pipe(handlebars())
 	.pipe(wrap('Handlebars.template(<%= contents %>)'))
 	.pipe(declare({
@@ -55,8 +69,14 @@ const compileTemplates = () => gulp
 			return declare.processNameByPath(newName);
 		}
 	}))
-	.pipe(concat(pathsTemplates[mode].concatName))
-	.pipe(gulp.dest(pathsTemplates[mode].dest));
+	.pipe(concat(concatName))
+	.pipe(gulp.dest(dest));
+
+const compileTemplates = () => compileViews(
+	pathsTemplates[mode].src,
+	pathsTemplates[mode].dest,
+	pathsTemplates[mode].concatName
+);
 
 const concatTemplatesApp = () => gulp
 	.src([
@@ -84,17 +104,48 @@ const cleanTemplates = () => gulp
 	.pipe(vinylPaths(del));
 
 /**
+ * For one Lazy App: compiles its views and Submodule views, appends them to
+ * its `app.js` (as `build-app` does), and deletes the loose `.html` files, so
+ * the App never fetches a view over XHR. Runs before r.js, so the views are
+ * minified with the App's bundle.
+ * @param  {String} name
+ * @return {Function}  gulp task
+ */
+const templatesLazyApp = name => {
+	const appDir = join(tmp, 'apps', name);
+	const compiledName = 'templates-compiled.js';
+	const compiled = join(appDir, 'views', compiledName);
+	const compile = () => compileViews(viewsOf(appDir), join(appDir, 'views'), compiledName);
+	const append = () => gulp
+		.src([join(appDir, 'app.js'), compiled], { allowEmpty: true })
+		.pipe(concat('app.js'))
+		.pipe(gulp.dest(appDir));
+	const clean = () => gulp
+		.src([...viewsOf(appDir), compiled], { allowEmpty: true, read: false })
+		.pipe(vinylPaths(del));
+	return gulp.series(compile, append, clean);
+};
+
+/**
+ * Folds every Lazy App's views into its own `app.js`.
+ */
+const templatesLazyApps = getLazyApps().length
+	? gulp.parallel(...getLazyApps().map(templatesLazyApp))
+	: done => done();
+
+/**
  * compileTemplates
  * concatTemplatesWhole
  * cleanTemplates
  *
- * Get all the apps .html files and pre-compile them with handlebars, then
- * append it to template.js
+ * Pre-compiles the Preloaded Apps' views with handlebars and appends them to
+ * templates.js, then folds each Lazy App's views into its own app.js
  */
 export const templates = gulp.series(
 	compileTemplates,
 	concatTemplatesWhole,
-	cleanTemplates
+	cleanTemplates,
+	templatesLazyApps
 );
 
 /**

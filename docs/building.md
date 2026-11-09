@@ -134,6 +134,13 @@ Runs a production build for the framework, including the following tasks:
 - resolve modules dependencies, transpiling bundled first-party sources to ES5 ([ADR-0009](adr/0009-transpile-bundled-sources-to-es5.md))
 - minify JS/CSS
 - generate build config
+
+The **Initial Load** (`js/main.js`, `js/templates.js`, `css/style.css`) carries the framework and the **Preloaded Apps** only (`auth`, `core`, `apploader`, `common`; `getPreloadedApps()` in `gulp/helpers/helpers.js`, which also writes `preloadedApps` in `build-config.json`). Every **Lazy App** is built as its own bundle, fetched the first time it is launched:
+
+- `apps/<name>/app.js`: one r.js layer, minified and transpiled, holding the App, all its Submodules (plus `submodules/pro` under `--pro`) and all its views. It leaves out everything `js/main.js` already has.
+- `apps/<name>/style/*.css`: minified, each with its `@import`s inlined, so vendor CSS that only one App uses (bootstrap-tour in `callflows`) travels with that App. It loads after `style.css`, so it wins cascade ties.
+
+A library that several Lazy Apps use but `js/main.js` doesn't carry (today: DataTables) goes in `libsSharedByApps` in `gulp/tasks/require.js`. It then loads once, as its own file. The build prints a warning naming any library it finds bundled into more than one App. A library that a Preloaded App's Submodule requires (today: isotope, for `common`'s `appSelector`) goes in `libsInMain`, because r.js can't trace Submodules into `js/main.js`.
 - key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and RequireJS fetches carry `v=<release id>`
 
 The output of the build is located at `/dist`. Cache a URL long only when its `v` key is one of these hashes, and serve the rest (`index.html`, `build-config.json` and `VERSION` included) no-cache. See [Deployment](deployment.md).
@@ -180,7 +187,7 @@ gulp serve-prod
 
 ## `size-report`
 
-Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per App and per framework/vendor stylesheet. It also lists the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
+Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per Preloaded App and per framework/vendor stylesheet. It also lists each Lazy App's own bundle (`app.js` plus its `style/*.css`) and the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
 
 Rows are measured standalone, using the same transpile step and minifiers as the build, so their gzip sizes don't add up exactly to the gzip of the whole file. The report prints the attributed total next to the actual size. Run `build-prod` first.
 
@@ -197,7 +204,7 @@ gulp size-report [options]
 --top n        Rows per table (default: 25)
 ```
 
-The JSON holds `initialLoad`, which `size-budget` checks: the emitted raw and gzip (zlib level 6) size of each **Initial Load** file and their total. It also holds `apps`, the emitted `app.js` + `style/app.css` of each App built as its own bundle, plus the per-row breakdown. Sizes are in bytes.
+The JSON holds `initialLoad`, which `size-budget` checks: the emitted raw and gzip (zlib level 6) size of each **Initial Load** file and their total. It also holds `apps`: for each Lazy App, the emitted `app.js` plus every `style/*.css` it loads, with a per-file breakdown. It also holds the per-row breakdown. Sizes are in bytes.
 
 ##### Examples
 

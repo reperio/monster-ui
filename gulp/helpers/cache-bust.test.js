@@ -10,9 +10,9 @@ const test = (name, fn) => tests.push({ name, fn });
 // Shape of the require.config call in a minified build-prod main.js.
 const minifiedMain = 'define("monster",[],function(){return{}}),require.config({paths:{jquery:"js/vendor/jquery",templates:"js/templates"},shim:{},urlArgs:"bust="+(new Date).getTime()}),require(["jquery","monster"],function(e,t){t.initConfig()});';
 
-test('the built main.js fetches by release and loads templates by its own hash', () => {
+test('the built main.js fetches by release and loads templates.js by its own hash, spelling out the .js RequireJS skips for a path with a query', () => {
 	const out = injectRequireConfig(minifiedMain, { releaseId: 'r1a2b3', templatesHash: 't9f8e7' });
-	assert.strictEqual(out, 'define("monster",[],function(){return{}}),require.config({paths:{jquery:"js/vendor/jquery",templates:"js/templates?v=t9f8e7"},shim:{},urlArgs:"v=r1a2b3"}),require(["jquery","monster"],function(e,t){t.initConfig()});');
+	assert.strictEqual(out, 'define("monster",[],function(){return{}}),require.config({paths:{jquery:"js/vendor/jquery",templates:"js/templates.js?v=t9f8e7"},shim:{},urlArgs:"v=r1a2b3"}),require(["jquery","monster"],function(e,t){t.initConfig()});');
 });
 
 test('a main.js whose require.config has no urlArgs fails the build instead of shipping unkeyed', () => {

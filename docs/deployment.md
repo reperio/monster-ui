@@ -28,7 +28,7 @@ On nginx, for example: `map $arg_v $static_cache { ~^[0-9a-f]{10}$ "public, max-
 `build-prod` runs a `cacheBust` step over the finished output, in this order:
 
 1. **Release id**: a 10-character SHA-256 of every file in the build tree (path and content). The tree still includes sources that never reach `/dist`, such as `.scss` files and Apps' `tests/`. An identical build gets the same id. Any change gives a new one, sometimes for a change that didn't ship.
-2. **`js/templates.js`** is hashed, and the built `js/main.js`'s RequireJS config gets `paths: { templates: 'js/templates?v=<templates hash>' }`. The config sets **`urlArgs: 'v=<release id>'`**, replacing the source's timestamp bust. So every RequireJS fetch (Apps' `app.js`, common's Submodules, vendor libraries outside the bundle) is keyed to the release, and `templates.js` is fetched as `js/templates?v=<templates hash>&v=<release id>`.
+2. **`js/templates.js`** is hashed, and the built `js/main.js`'s RequireJS config gets `paths: { templates: 'js/templates.js?v=<templates hash>' }` (a path with a query gets no `.js` added, so it is written out). The config sets **`urlArgs: 'v=<release id>'`**, replacing the source's timestamp bust. So every RequireJS fetch (Apps' `app.js`, common's Submodules, vendor libraries outside the bundle) is keyed to the release, and `templates.js` is fetched as `js/templates.js?v=<templates hash>&v=<release id>`.
 3. **`js/main.js`** (after step 2) and **`css/style.css`** are hashed.
 4. **`index.html`** is rewritten to load `js/main.js?v=<main hash>` and `css/style.css?v=<style hash>`.
 
