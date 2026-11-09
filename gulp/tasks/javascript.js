@@ -1,4 +1,4 @@
-import { env, mode } from '../helpers/helpers.js';
+import { env, getLazyApps, mode } from '../helpers/helpers.js';
 import { join } from 'upath';
 import gulp from 'gulp';
 import uglify from 'gulp-uglify';
@@ -27,16 +27,19 @@ const handleUglifyError = error => {
 };
 
 /**
- * Minifies js/main.js, we don't use the optimizer from requirejs as we don't
- * want to minify config.js
+ * Minifies js/main.js, js/templates.js and each Lazy App's bundle; we don't use
+ * the optimizer from requirejs as we don't want to minify config.js
  */
 export const minifyJs = () => gulp
 	.src([
 		join(tmp, 'js', 'main.js'),
-		join(tmp, 'js', 'templates.js')
-	])
+		join(tmp, 'js', 'templates.js'),
+		...getLazyApps().map(item => join(tmp, 'apps', item, 'app.js'))
+	], {
+		base: tmp
+	})
 	.pipe(uglify().on('error', handleUglifyError))
-	.pipe(gulp.dest(join(tmp, 'js')));
+	.pipe(gulp.dest(tmp));
 
 /**
  * Minifies app.js

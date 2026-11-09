@@ -5,7 +5,7 @@ import { app, tmp } from '../paths.js';
 import { frameworkConfig } from '../helpers/build-config.js';
 import {
 	env,
-	getAppsToInclude,
+	getPreloadedApps,
 	getProApps,
 	listAllApps
 } from '../helpers/helpers.js';
@@ -25,9 +25,8 @@ const isProApp = appName => getProApps()
 const writeFrameworkConfig = buildType => {
 	const configFilePath = join(tmp, 'build-config.json');
 
-	// Must list exactly the Apps already in the trio (see frameworkConfig). Every
-	// App is still bundled into main.js, so for now every App is preloaded.
-	const config = frameworkConfig(buildType, getAppsToInclude());
+	// Must list exactly the Apps already in the trio (see frameworkConfig).
+	const config = frameworkConfig(buildType, getPreloadedApps());
 
 	writeFile(configFilePath, config);
 

@@ -1,10 +1,28 @@
 {
 	"$comment": "Size budget checked by `gulp size-budget` in the build-prod CI job, in KB (1024 bytes) of emitted output. Lower an entry to measured, rounded up to the next 10 KB gzip / 50 KB raw, whenever a PR shrinks it; raise one only in a PR that says why. See docs/building.md#size-budget.",
 	"initialLoad": {
-		"js/main.js": { "rawKB": 1950, "gzipKB": 530 },
-		"js/templates.js": { "rawKB": 2950, "gzipKB": 310 },
-		"css/style.css": { "rawKB": 1000, "gzipKB": 160 },
-		"total": { "rawKB": 5850, "gzipKB": 1000 }
+		"js/main.js": { "rawKB": 1550, "gzipKB": 430 },
+		"js/templates.js": { "rawKB": 800, "gzipKB": 100 },
+		"css/style.css": { "rawKB": 600, "gzipKB": 100 },
+		"total": { "rawKB": 2900, "gzipKB": 610 }
 	},
-	"apps": {}
+	"apps": {
+		"accounts": { "rawKB": 369, "gzipKB": 57 },
+		"addressbooks": { "rawKB": 66, "gzipKB": 13 },
+		"apiexplorer": { "rawKB": 64, "gzipKB": 16 },
+		"appstore": { "rawKB": 69, "gzipKB": 13 },
+		"callcenter": { "rawKB": 143, "gzipKB": 24 },
+		"callflows": { "rawKB": 1272, "gzipKB": 156 },
+		"myaccount": { "rawKB": 523, "gzipKB": 94 },
+		"numbers": { "rawKB": 2, "gzipKB": 1 },
+		"parkinglot": { "rawKB": 10, "gzipKB": 3 },
+		"pbxs": { "rawKB": 92, "gzipKB": 17 },
+		"recordings": { "rawKB": 52, "gzipKB": 10 },
+		"storagemgmt": { "rawKB": 38, "gzipKB": 11 },
+		"switchboard": { "rawKB": 35, "gzipKB": 8 },
+		"voicemails": { "rawKB": 48, "gzipKB": 9 },
+		"voip": { "rawKB": 1156, "gzipKB": 188 },
+		"webhooks": { "rawKB": 73, "gzipKB": 13 },
+		"whitelabel": { "rawKB": 83, "gzipKB": 14 }
+	}
 }
