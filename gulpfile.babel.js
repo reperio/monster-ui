@@ -2,6 +2,7 @@ import { serve, watch } from './gulp/tasks/server.js';
 import gulp from 'gulp';
 import require from './gulp/tasks/require.js';
 import writeVersion from './gulp/tasks/write-version.js';
+import cacheBust from './gulp/tasks/cache-bust.js';
 import sizeReport from './gulp/tasks/size-report.js';
 import sizeBudget from './gulp/tasks/size-budget.js';
 import { lint, minifyJs, minifyJsApp } from './gulp/tasks/javascript.js';
@@ -27,6 +28,7 @@ const buildProd = gulp.series(
 	css,
 	writeConfigProd,
 	writeVersion,
+	cacheBust,
 	cleanFolders
 );
 

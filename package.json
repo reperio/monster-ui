@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
-    "test": "node -r babel-register gulp/helpers/size-budget.test.js && node -r babel-register gulp/helpers/build-config.test.js"
+    "test": "node -r babel-register gulp/helpers/size-budget.test.js && node -r babel-register gulp/helpers/build-config.test.js && node -r babel-register gulp/helpers/cache-bust.test.js"
   },
   "repository": {
     "type": "git",
