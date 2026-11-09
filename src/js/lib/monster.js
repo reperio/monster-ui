@@ -2,7 +2,6 @@ define(function(require) {
 	var $ = require('jquery'),
 		_ = require('lodash'),
 		async = require('async'),
-		card = require('card'),
 		Cookies = require('cookies'),
 		ddslick = require('ddslick'),
 		fileupload = require('fileupload'),

@@ -9,7 +9,6 @@ require.config({
 		'braintree-hosted-fields': 'js/vendor/braintree.hosted-fields.min',
 		'braintree-us-bank-account': 'js/vendor/braintree.us-bank-account.min',
 		'braintree-vault-manager': 'js/vendor/braintree.vault-manager.min',
-		'card': 'js/vendor/card',
 		'chart': 'js/vendor/Chart.min',
 		'chosen': 'js/vendor/jquery.chosen.min',
 		'clipboard': 'js/vendor/clipboard.min',
@@ -92,7 +91,6 @@ require.config({
 	},
 	shim: {
 		'bootstrap': ['jqueryui'],
-		'card': ['jquery'],
 		'chosen': ['jquery'],
 		'crossroads': ['signals'],
 		'ddslick': ['jquery'],

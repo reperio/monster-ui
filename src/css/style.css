@@ -1,7 +1,6 @@
 @import url('vendor/boilertplate.css');
 
 @import url('vendor/normalize.css');
-@import url('vendor/animate.css');
 
 @import url('vendor/bootstrap.min.css');
 @import url('lib/custom/bootstrap-add.css');
@@ -33,10 +32,6 @@
 @import url('lib/custom/introjs-add.css');
 
 @import url('vendor/bootstrap-tour.css');
-
-@import url('vendor/card.css');
-
-@import url('vendor/pretty-print.css');
 
 @import url('vendor/toastr.css');
 @import url('lib/custom/toastr-add.css');

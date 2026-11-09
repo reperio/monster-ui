@@ -27,7 +27,6 @@ const libsToExcludeFromApp = [
 	'braintree-hosted-fields',
 	'braintree-us-bank-account',
 	'braintree-vault-manager',
-	'card',
 	'chart',
 	'chosen',
 	'clipboard',
