@@ -13,10 +13,18 @@ const standardFilesToExclude = [
 	'templates'
 ];
 
+/**
+ * Loaded on their first `require()` instead of bundled into main.js. Every
+ * module here is only required lazily (`require([...], callback)`), which
+ * `findNestedDependencies` would otherwise pull into the bundle.
+ * @type {Array}
+ */
 const libsToExcludeFromWhole = [
+	'jsoneditor',
 	'pdfjs-dist/build/pdf',
 	'pdfjs-dist/build/pdf.worker',
 	'pdfmake',
+	'simplemde',
 	'vfs_fonts'
 ];
 
