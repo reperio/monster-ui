@@ -101,6 +101,7 @@ Runs a production build for a specific app, including the following tasks:
 - resolve modules dependencies
 - minify JS/CSS
 - generate build config
+- write a Brotli (`.br`) and a gzip (`.gz`) copy next to each text file in `/dist/apps/<name>`, for nginx's `brotli_static` / `gzip_static`, and delete any stale copy there (see [Deployment](deployment.md#compression))
 
 The output of the build is located at `/dist/apps/<name>`.
 
@@ -148,6 +149,7 @@ The **Initial Load** (`js/main.js`, `js/templates.js`, `css/style.css`) carries 
 
 A library that several Lazy Apps or chunks use but `js/main.js` doesn't carry (today: DataTables, papaparse) goes in `libsSharedByApps` in `gulp/tasks/require.js`. It then loads once, as its own file. The build prints a warning naming any library it finds bundled into more than one App bundle or chunk. A library that a Preloaded App's Submodule requires (today: isotope, for `common`'s `appSelector`) goes in `libsInMain`, because r.js can't trace Submodules into `js/main.js`.
 - key every URL to its content: `index.html` loads `js/main.js?v=<hash>` and `css/style.css?v=<hash>`, `templates.js` gets its own hash, and each App and lazily required file gets its own hash through the `cacheKeys` manifest in `build-config.json` (see [Deployment](deployment.md))
+- as the last step, write a Brotli (`.br`) and a gzip (`.gz`) copy next to each text file in `/dist` (not `js/config.js`), for nginx's `brotli_static` / `gzip_static`, and delete any stale copy (see [Deployment](deployment.md#compression)); not in `build-dev` / `serve-dev`
 
 The output of the build is located at `/dist`. Cache a URL long only when its `v` key is one of these hashes, and serve the rest (`index.html`, `build-config.json` and `VERSION` included) no-cache. See [Deployment](deployment.md).
 
@@ -193,7 +195,7 @@ gulp serve-prod
 
 ## `size-report`
 
-Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per Preloaded App and per framework/vendor stylesheet. It also lists each Lazy App's own bundle (`app.js` plus its `style/*.css`), each lazy Submodule chunk, the bytes `common` fetches at login outside the trio (reported, not budgeted), and the submodule JS and i18n that ship outside those three files. Every row has a raw and a gzip size.
+Reports what makes up the output of `build-prod`. It breaks `js/main.js` down per App, framework module and vendor library. It breaks `js/templates.js` down per App and submodule, and `css/style.css` per Preloaded App and per framework/vendor stylesheet. It also lists each Lazy App's own bundle (`app.js` plus its `style/*.css`), each lazy Submodule chunk, the bytes `common` fetches at login outside the trio (reported, not budgeted), and the submodule JS and i18n that ship outside those three files. Every row has a raw, a gzip (level 6) and a Brotli (quality 11) size. `size-budget` checks raw and gzip only; Brotli is reported, not budgeted.
 
 Rows are measured standalone, using the same transpile step and minifiers as the build, so their gzip sizes don't add up exactly to the gzip of the whole file. The report prints the attributed total next to the actual size. Run `build-prod` first.
 

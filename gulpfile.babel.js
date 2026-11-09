@@ -5,6 +5,7 @@ import writeVersion from './gulp/tasks/write-version.js';
 import cacheBust from './gulp/tasks/cache-bust.js';
 import sizeReport from './gulp/tasks/size-report.js';
 import sizeBudget from './gulp/tasks/size-budget.js';
+import { precompressApp, precompressDist } from './gulp/tasks/precompress.js';
 import { lint, minifyJs, minifyJsApp } from './gulp/tasks/javascript.js';
 import { templates, templatesApp } from './gulp/tasks/templates.js';
 import { compileSass, css, minifyCssApp } from './gulp/tasks/style.js';
@@ -29,7 +30,8 @@ const buildProd = gulp.series(
 	writeConfigProd,
 	writeVersion,
 	cacheBust,
-	cleanFolders
+	cleanFolders,
+	precompressDist
 );
 
 const buildDev = gulp.series(
@@ -48,7 +50,8 @@ const buildApp = gulp.series(
 	minifyJsApp,
 	minifyCssApp,
 	writeConfigApp,
-	cleanFolders
+	cleanFolders,
+	precompressApp
 );
 
 gulp.task('lint', lint);

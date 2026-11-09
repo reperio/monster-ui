@@ -6,6 +6,7 @@ import { dist, src } from '../paths.js';
 import { env } from '../helpers/helpers.js';
 import { INITIAL_LOAD_FILES } from '../helpers/size-budget.js';
 import { parseBuildTxt } from '../helpers/app-bundles.js';
+import { brotli } from '../helpers/precompress.js';
 import { shouldTranspile, transpileToEs5 } from '../helpers/transpile.js';
 import nodeSass from 'node-sass';
 import tildeImporter from 'node-sass-tilde-importer';
@@ -42,7 +43,10 @@ import tildeImporter from 'node-sass-tilde-importer';
  *     goes through clean-css. For the framework, each
  *     file that `css/style.css` imports goes through clean-css too.
  *
- * gzip is zlib level 6 (the zlib/Node default), applied to each piece alone.
+ * gzip is zlib level 6 (the zlib/Node default), applied to each piece alone:
+ * what an unconfigured server sends, and what `size-budget.json` caps.
+ * Brotli is quality 11, as in the `.br` copies the build writes for
+ * `brotli_static` (docs/deployment.md). It is reported, never budgeted.
  */
 
 const resolveFrom = (pkg, from) => require(require.resolve(pkg, {
@@ -58,11 +62,14 @@ const CleanCss = resolveFrom('clean-css', 'gulp-clean-css');
 uglify.AST_Node.warn_function = () => {};
 
 const gzipSize = text => gzipSync(Buffer.from(text), { level: 6 }).length;
-const sizes = text => ({ raw: Buffer.byteLength(text), gzip: gzipSize(text) });
-const sumSizes = rows => rows.reduce((acc, { raw, gzip }) => ({
+const brotliSize = text => brotli(Buffer.from(text)).length;
+const sizes = text => ({ raw: Buffer.byteLength(text), gzip: gzipSize(text), brotli: brotliSize(text) });
+const NO_SIZE = { raw: 0, gzip: 0, brotli: 0 };
+const sumSizes = rows => rows.reduce((acc, { raw, gzip, brotli }) => ({
 	raw: acc.raw + raw,
-	gzip: acc.gzip + gzip
-}), { raw: 0, gzip: 0 });
+	gzip: acc.gzip + gzip,
+	brotli: acc.brotli + brotli
+}), NO_SIZE);
 
 const minifyJs = (code, file) => {
 	const transpiled = shouldTranspile(join(src, file), src)
@@ -109,10 +116,11 @@ const classifyJs = file => {
 
 const groupRows = rows => Object.values(rows.reduce((acc, row) => {
 	const key = `${row.group}:${row.name}`;
-	acc[key] = acc[key] || { group: row.group, name: row.name, files: [], raw: 0, gzip: 0 };
+	acc[key] = acc[key] || Object.assign({ group: row.group, name: row.name, files: [] }, NO_SIZE);
 	acc[key].files.push(row.file);
 	acc[key].raw += row.raw;
 	acc[key].gzip += row.gzip;
+	acc[key].brotli += row.brotli;
 	return acc;
 }, {})).sort((a, b) => b.raw - a.raw);
 
@@ -258,7 +266,7 @@ const measureLoose = () => appNames().map(app => {
 		name: app,
 		submoduleFiles: js.length,
 		submoduleJs: jsSizes,
-		i18nEnUs: existsSync(i18n) ? sizes(readFileSync(i18n, 'utf8')) : { raw: 0, gzip: 0 }
+		i18nEnUs: existsSync(i18n) ? sizes(readFileSync(i18n, 'utf8')) : NO_SIZE
 	};
 }).sort((a, b) => b.submoduleJs.raw - a.submoduleJs.raw);
 
@@ -332,28 +340,30 @@ const table = (headers, rows) => [
 ].join('\n');
 
 const sizeTable = (label, grouped, total, top) => table(
-	[label, 'raw KB', 'gzip KB', '% raw'],
+	[label, 'raw KB', 'gzip KB', 'brotli KB', '% raw'],
 	grouped.slice(0, top).map(row => [
 		`${row.group === 'app' ? '' : `${row.group}: `}${row.name}`,
 		kb(row.raw),
 		kb(row.gzip),
+		kb(row.brotli),
 		pct(row.raw, total.raw)
 	])
 );
 
 const groupTotals = (grouped, total) => table(
-	['group', 'raw KB', 'gzip KB (standalone sum)', '% raw'],
+	['group', 'raw KB', 'gzip KB (standalone sum)', 'brotli KB (standalone sum)', '% raw'],
 	Object.entries(grouped.reduce((acc, row) => {
-		acc[row.group] = acc[row.group] || { raw: 0, gzip: 0 };
+		acc[row.group] = acc[row.group] || Object.assign({}, NO_SIZE);
 		acc[row.group].raw += row.raw;
 		acc[row.group].gzip += row.gzip;
+		acc[row.group].brotli += row.brotli;
 		return acc;
 	}, {})).sort((a, b) => b[1].raw - a[1].raw).map(([group, s]) => [
-		group, kb(s.raw), kb(s.gzip), pct(s.raw, total.raw)
+		group, kb(s.raw), kb(s.gzip), kb(s.brotli), pct(s.raw, total.raw)
 	])
 );
 
-const summary = (file, total, attributed) => `\`${file}\`: **${kb(total.raw)} KB raw / ${kb(total.gzip)} KB gzip** (attributed: ${kb(attributed.raw)} KB raw = ${pct(attributed.raw, total.raw)}, ${kb(attributed.gzip)} KB gzip standalone)`;
+const summary = (file, total, attributed) => `\`${file}\`: **${kb(total.raw)} KB raw / ${kb(total.gzip)} KB gzip / ${kb(total.brotli)} KB brotli** (attributed: ${kb(attributed.raw)} KB raw = ${pct(attributed.raw, total.raw)}, ${kb(attributed.gzip)} KB gzip standalone)`;
 
 const toMarkdown = (report, top) => {
 	const { main, templates, style, apps, lazySubmodules, commonAtLogin, loose, totals } = report;
@@ -361,9 +371,9 @@ const toMarkdown = (report, top) => {
 	return [
 		'# Production bundle size report',
 		'',
-		`Initial-load trio (main.js + templates.js + style.css): **${kb(initial.raw)} KB raw / ${kb(initial.gzip)} KB gzip**.`,
+		`Initial-load trio (main.js + templates.js + style.css): **${kb(initial.raw)} KB raw / ${kb(initial.gzip)} KB gzip / ${kb(initial.brotli)} KB brotli**.`,
 		'',
-		table(['file', 'raw KB', 'gzip KB'], Object.entries(totals).map(([file, s]) => [file, kb(s.raw), kb(s.gzip)])),
+		table(['file', 'raw KB', 'gzip KB', 'brotli KB'], Object.entries(totals).map(([file, s]) => [file, kb(s.raw), kb(s.gzip), kb(s.brotli)])),
 		'',
 		'## js/main.js',
 		'',
@@ -395,39 +405,42 @@ const toMarkdown = (report, top) => {
 		'## Lazy Apps (each fetched on first launch)',
 		'',
 		table(
-			['App', 'files', 'raw KB', 'gzip KB'],
+			['App', 'files', 'raw KB', 'gzip KB', 'brotli KB'],
 			Object.entries(apps)
 				.sort((a, b) => b[1].raw - a[1].raw)
 				.map(([name, s]) => [
 					name,
 					Object.keys(s.files).map(file => file.replace(`apps/${name}/`, '')).join(', '),
 					kb(s.raw),
-					kb(s.gzip)
+					kb(s.gzip),
+					kb(s.brotli)
 				])
 		),
 		'',
 		'## Lazy Submodule chunks (each fetched on first publish)',
 		'',
-		`\`common\` fetches at login outside the trio: **${kb(commonAtLogin.raw)} KB raw / ${kb(commonAtLogin.gzip)} KB gzip** (${Object.keys(commonAtLogin.files).map(file => file.replace('apps/common/', '')).join(', ') || 'nothing'}). Reported, not budgeted.`,
+		`\`common\` fetches at login outside the trio: **${kb(commonAtLogin.raw)} KB raw / ${kb(commonAtLogin.gzip)} KB gzip / ${kb(commonAtLogin.brotli)} KB brotli** (${Object.keys(commonAtLogin.files).map(file => file.replace('apps/common/', '')).join(', ') || 'nothing'}). Reported, not budgeted.`,
 		'',
 		table(
-			['chunk', 'raw KB', 'gzip KB'],
+			['chunk', 'raw KB', 'gzip KB', 'brotli KB'],
 			Object.entries(lazySubmodules)
 				.sort((a, b) => b[1].raw - a[1].raw)
-				.map(([name, s]) => [name, kb(s.raw), kb(s.gzip)])
+				.map(([name, s]) => [name, kb(s.raw), kb(s.gzip), kb(s.brotli)])
 		),
 		'',
 		'## Other files outside the trio (loaded on demand)',
 		'',
 		table(
-			['App', 'submodule .js files', 'submodule JS raw KB', 'gzip KB', 'i18n en-US raw KB', 'gzip KB'],
+			['App', 'submodule .js files', 'submodule JS raw KB', 'gzip KB', 'brotli KB', 'i18n en-US raw KB', 'gzip KB', 'brotli KB'],
 			loose.map(row => [
 				row.name,
 				row.submoduleFiles,
 				kb(row.submoduleJs.raw),
 				kb(row.submoduleJs.gzip),
+				kb(row.submoduleJs.brotli),
 				kb(row.i18nEnUs.raw),
-				kb(row.i18nEnUs.gzip)
+				kb(row.i18nEnUs.gzip),
+				kb(row.i18nEnUs.brotli)
 			])
 		),
 		''

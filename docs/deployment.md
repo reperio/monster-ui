@@ -22,6 +22,32 @@ What a web server needs to know to serve the output of [`gulp build-prod`](build
 
 On nginx, for example: `map $arg_v $static_cache { ~^[0-9a-f]{10}$ "public, max-age=31536000, immutable"; default "no-cache"; }` and then `add_header Cache-Control $static_cache;`.
 
+## Compression
+
+As its last step, `build-prod` writes a Brotli (`.br`, quality 11) and a gzip (`.gz`, level 9) copy next to each `.js`, `.css`, `.json`, `.html`, `.svg` and `.properties` file in `/dist`. `build-app` does the same for `/dist/apps/<name>`. Neither build writes a copy for:
+
+- `js/config.js`, which you edit after the build. A build-time copy would go stale.
+- Images, `.xlsx` and `.bcmap` files. They are already compressed, or only the PDF viewer fetches them.
+- A format whose copy would be less than 10% smaller than the file. Small files may end up with only one copy, or none.
+
+Each run also deletes every `.br` / `.gz` file under its output folder that it didn't write.
+
+Serve the copies as they are, so each response needs no compression on the fly and Brotli can run at its highest level:
+
+```nginx
+gzip_static on;
+brotli_static on;   # needs the third-party ngx_brotli module
+
+# Still compresses files that have no copy, such as js/config.js.
+gzip on;
+gzip_vary on;
+gzip_types text/css application/javascript application/json image/svg+xml text/plain;
+```
+
+Without `ngx_brotli`, nginx doesn't know `brotli_static` and ignores the `.br` files. Leave that line out and the `.gz` copies still work.
+
+**Deploy by replacing a folder, never by copying over an old deploy.** `gzip_static` and `brotli_static` serve `main.js.gz` for `main.js` without checking that the two match. If you copy a new build over an old one, a copy left over from the old build shadows the new file whenever the new build didn't write that copy. Replace the whole `dist` (or, after `gulp build-app`, the whole `apps/<name>` folder) instead. This matters most when you redeploy one App on its own.
+
 ## How the URLs are keyed
 
 `build-prod` runs a `cacheBust` step over the finished output, in this order:
