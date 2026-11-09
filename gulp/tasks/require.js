@@ -50,7 +50,8 @@ export const libsSharedByApps = [
 	'datatables.net-buttons',
 	'datatables.net-buttons-bootstrap',
 	'datatables.net-buttons-html5',
-	'papaparse' // common's csvUploader and portWizard
+	// common's csvUploader and portWizard chunks
+	'papaparse'
 ];
 
 /**

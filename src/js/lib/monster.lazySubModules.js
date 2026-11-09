@@ -13,6 +13,9 @@
  */
 define(function() {
 	/**
+	 * Subscribes a stub to each lazy topic, which loads the topic's Submodule
+	 * on its first publish and then hands every publish it received to the
+	 * real handlers.
 	 * @param  {Object} options
 	 * @param  {Object} options.topics  Topic -> Submodule name, from
 	 *                                  `lazySubModules` in build-config.json
@@ -21,7 +24,9 @@ define(function() {
 	 * @param  {Function} options.publish  `(topic, data)`
 	 * @param  {Function} options.load  `(submodule, done)`: loads the Submodule,
 	 *                                  subscribes its handlers, then calls
-	 *                                  `done(error)`
+	 *                                  `done(error)` in the same tick, so no
+	 *                                  publish reaches both a stub and a
+	 *                                  real handler
 	 * @param  {Function} [options.onError]  `(error, submodule)`, when a load
 	 *                                       fails. The publishes queued for
 	 *                                       it are dropped and the stubs stay,

@@ -767,25 +767,38 @@ define(['monster-lazy-submodules'], function(lazySubModules) {
 
 					callback(null, app);
 				},
-				requireSubModule = _.partial(function(appRoot, app, subModule, callback) {
+				fetchSubModule = _.partial(function(appRoot, subModule, callback) {
 					var pathSubModule = appRoot + '/submodules/',
 						path = pathSubModule + subModule + '/' + subModule;
 
-					require([path], function(module) {
-						/* We need to be able to subscribe to the same event with many callbacks, so we can't merge the subscribes key together, or it would override some valid callbacks */
-						var oldSubscribes = $.extend(true, {}, app.subscribe);
-						$.extend(true, app, module);
-						app.subscribe = oldSubscribes;
-
-						_.each(module.subscribe, function(callback, topic) {
-							var cb = typeof callback === 'string' ? app[callback] : callback;
-
-							monster.sub(topic, cb, app);
-						});
-
-						callback(null, module);
-					}, callback);
+					require([path], _.partial(callback, null), callback);
 				}, pathConfig.moduleRoot),
+				/**
+				 * Merges a fetched Submodule into its App and subscribes its handlers.
+				 * @param  {Object} app
+				 * @param  {Object} module
+				 */
+				mergeSubModule = function mergeSubModule(app, module) {
+					/* We need to be able to subscribe to the same event with many callbacks, so we can't merge the subscribes key together, or it would override some valid callbacks */
+					var oldSubscribes = $.extend(true, {}, app.subscribe);
+					$.extend(true, app, module);
+					app.subscribe = oldSubscribes;
+
+					_.each(module.subscribe, function(callback, topic) {
+						var cb = typeof callback === 'string' ? app[callback] : callback;
+
+						monster.sub(topic, cb, app);
+					});
+				},
+				requireSubModule = function requireSubModule(app, subModule, callback) {
+					fetchSubModule(subModule, function(err, module) {
+						if (err) {
+							return callback(err);
+						}
+						mergeSubModule(app, module);
+						callback(null);
+					});
+				},
 				/**
 				 * Topic -> Submodule for the App's Submodules that load on first
 				 * publish (`lazySubModules` in build-config.json), limited to the
@@ -830,16 +843,22 @@ define(['monster-lazy-submodules'], function(lazySubModules) {
 						unsubscribe: _.bind(monster.unsub, monster),
 						publish: _.bind(monster.pub, monster),
 						load: function(subModule, done) {
-							requireSubModule(app, subModule, function(err, module) {
+							fetchSubModule(subModule, function(err, module) {
 								if (err) {
 									return done(err);
 								}
-								_.each(module.requests, function(request, id) {
-									monster._defineRequest(id, request, app);
+
+								// Subscribe the real handlers, unsubscribe the stubs and replay
+								// in one tick, so no publish reaches both; and outside
+								// RequireJS's callback, which would catch a handler's
+								// exception and report it as a failed load.
+								_.defer(function() {
+									mergeSubModule(app, module);
+									_.each(module.requests, function(request, id) {
+										monster._defineRequest(id, request, app);
+									});
+									done(null);
 								});
-								// Replay outside RequireJS's callback: it would catch a
-								// handler's exception and report it as a failed load.
-								_.defer(done, null);
 							});
 						},
 						onError: function(error, subModule) {

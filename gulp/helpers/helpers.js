@@ -66,15 +66,19 @@ export const listSubmodules = (root, app) => {
  * subscriber. Other Apps load all their Submodules at start.
  */
 const eagerCores = {
+	// accountBrowser: core's account switcher. cidNumber: monster.ui.
+	// numberFeaturesMenu: voip groups/users call tooltips right after pub.
+	// webphone: monster.webphone.
 	common: [
-		'accountBrowser', // core's account switcher
-		'cidNumber', // monster.ui.cidNumberSelector
-		'numberFeaturesMenu', // voip groups/users call tooltips right after pub
-		'webphone' // monster.webphone
+		'accountBrowser',
+		'cidNumber',
+		'numberFeaturesMenu',
+		'webphone'
 	]
 };
 
 /**
+ * The Submodules of `app` bundled into main.js and loaded at start.
  * @param  {String} app
  * @return {String[]}  The App's eager core; empty for an App that loads all
  *                     its Submodules at start
@@ -82,6 +86,8 @@ const eagerCores = {
 export const getEagerSubmodules = app => eagerCores[app] || [];
 
 /**
+ * The Submodules of `app` built as their own chunk, each loaded on its first
+ * publish.
  * @param  {String} root  Directory holding `apps/`
  * @param  {String} app
  * @return {String[]}  Submodules of `app` that load on first publish
