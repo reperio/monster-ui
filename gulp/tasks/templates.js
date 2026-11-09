@@ -45,6 +45,9 @@ const pathsTemplates = {
  */
 const compileViews = (src, dest, concatName) => gulp
 	.src(src)
+	// Sort before `declare`: with `noRedeclare`, each namespace is initialised
+	// only in the first file that uses it, so that file must come first.
+	.pipe(sortByPath())
 	.pipe(handlebars())
 	.pipe(wrap('Handlebars.template(<%= contents %>)'))
 	.pipe(declare({
@@ -70,7 +73,6 @@ const compileViews = (src, dest, concatName) => gulp
 			return declare.processNameByPath(newName);
 		}
 	}))
-	.pipe(sortByPath())
 	.pipe(concat(concatName))
 	.pipe(gulp.dest(dest));
 
