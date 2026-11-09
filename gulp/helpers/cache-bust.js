@@ -254,3 +254,26 @@ export const cacheManifest = (dir, { apps, chunks }) => {
 		}, {})
 	};
 };
+
+/**
+ * Every module RequireJS fetches on its own after boot, outside an App's
+ * app.js: the libraries no bundle carries, then each Preloaded App's
+ * Submodules that main.js leaves out. Those are a lazy Submodule's chunk, or
+ * a loose file for an App that loads all its Submodules at start. A Lazy App's
+ * Submodules are bundled into its app.js, and main.js carries a Preloaded
+ * App's eager Submodules and a Preloaded pro App's `pro`.
+ * @param  {Object} options
+ * @param  {String[]} options.libs  Libraries loaded as their own file
+ * @param  {String[]} options.preloadedApps
+ * @param  {String[]} options.proApps
+ * @param  {Function} options.submodulesOf  App name -> Submodule names on disk
+ * @param  {Function} options.eagerSubmodulesOf  App name -> Submodules in main.js
+ * @return {String[]}  Module IDs
+ */
+export const lazyChunks = ({ libs, preloadedApps, proApps, submodulesOf, eagerSubmodulesOf }) => [
+	...libs,
+	...preloadedApps.reduce((acc, app) => acc.concat(submodulesOf(app)
+		.filter(submodule => !(submodule === 'pro' && proApps.includes(app)))
+		.filter(submodule => !eagerSubmodulesOf(app).includes(submodule))
+		.map(submodule => `apps/${app}/submodules/${submodule}/${submodule}`)), [])
+];

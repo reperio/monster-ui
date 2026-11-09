@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { tmp } from '../paths.js';
 import {
 	getAppsToInclude,
+	getEagerSubmodules,
 	getPreloadedApps,
 	getProApps,
 	listSubmodules
@@ -12,23 +13,17 @@ import {
 	cacheManifest,
 	hashContent,
 	injectRequireConfig,
+	lazyChunks,
 	rewriteIndexHtml
 } from '../helpers/cache-bust.js';
 
-/**
- * Every module RequireJS fetches on its own after boot, outside an App's
- * app.js: the libraries no bundle carries, and the Preloaded Apps' Submodules,
- * which stay loose files (a Lazy App's are bundled into its app.js, and a
- * Preloaded pro App's `pro` into main.js).
- * @return {String[]}
- */
-const lazyChunks = () => [
-	...libsToExcludeFromWhole,
-	...libsSharedByApps,
-	...getPreloadedApps().reduce((acc, app) => acc.concat(listSubmodules(tmp, app)
-		.filter(submodule => !(submodule === 'pro' && getProApps().includes(app)))
-		.map(submodule => `apps/${app}/submodules/${submodule}/${submodule}`)), [])
-];
+const chunks = () => lazyChunks({
+	libs: [...libsToExcludeFromWhole, ...libsSharedByApps],
+	preloadedApps: getPreloadedApps(),
+	proApps: getProApps(),
+	submodulesOf: app => listSubmodules(tmp, app),
+	eagerSubmodulesOf: getEagerSubmodules
+});
 
 /**
  * Keys the production build's URLs to their content, so everything but
@@ -45,7 +40,7 @@ const cacheBust = done => {
 	const file = path => join(tmp, path);
 	const read = path => readFileSync(file(path));
 
-	const cacheKeys = cacheManifest(tmp, { apps: getAppsToInclude(), chunks: lazyChunks() });
+	const cacheKeys = cacheManifest(tmp, { apps: getAppsToInclude(), chunks: chunks() });
 	const buildConfig = JSON.parse(read('build-config.json'));
 	writeFileSync(file('build-config.json'), JSON.stringify(Object.assign(buildConfig, { cacheKeys })));
 

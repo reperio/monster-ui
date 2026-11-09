@@ -5,6 +5,7 @@ import { app, tmp } from '../paths.js';
 import { frameworkConfig } from '../helpers/build-config.js';
 import {
 	env,
+	getLazySubmoduleTopics,
 	getPreloadedApps,
 	getProApps,
 	listAllApps
@@ -26,7 +27,7 @@ const writeFrameworkConfig = buildType => {
 	const configFilePath = join(tmp, 'build-config.json');
 
 	// Must list exactly the Apps already in the trio (see frameworkConfig).
-	const config = frameworkConfig(buildType, getPreloadedApps());
+	const config = frameworkConfig(buildType, getPreloadedApps(), getLazySubmoduleTopics(tmp));
 
 	writeFile(configFilePath, config);
 

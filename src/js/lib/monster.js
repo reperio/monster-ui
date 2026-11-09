@@ -635,7 +635,8 @@ define(function(require) {
 					'type',
 					'preloadedApps',
 					'proApps',
-					'cacheKeys'
+					'cacheKeys',
+					'lazySubModules'
 				]);
 
 			monster.parallel({

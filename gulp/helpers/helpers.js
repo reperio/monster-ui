@@ -5,6 +5,7 @@ import { src } from '../paths.js';
 import nodeSass from 'node-sass';
 import gulpSass from 'gulp-sass';
 import tildeImporter from 'node-sass-tilde-importer';
+import { lazyTopicMap } from './lazy-submodules.js';
 
 const getAppsToExclude = () => ['demo_done', 'skeleton'];
 
@@ -54,6 +55,67 @@ export const listSubmodules = (root, app) => {
 		? getDirectories(dir).filter(sub => fs.existsSync(join(dir, sub, `${sub}.js`)))
 		: [];
 };
+
+/**
+ * Apps whose Submodules load on their first publish, each with its eager core:
+ * the Submodules bundled into main.js and loaded at start. A Submodule is
+ * eager when the framework or a Preloaded App publishes it, or when a caller
+ * does DOM work right after `pub` and so needs it to render synchronously
+ * (docs/adr/0010-common-controls-load-on-first-publish.md). Every other
+ * Submodule of these Apps is lazy: its own chunk, loaded through a stub
+ * subscriber. Other Apps load all their Submodules at start.
+ */
+const eagerCores = {
+	// accountBrowser: core's account switcher. cidNumber: monster.ui.
+	// numberFeaturesMenu: voip groups/users call tooltips right after pub.
+	// webphone: monster.webphone.
+	common: [
+		'accountBrowser',
+		'cidNumber',
+		'numberFeaturesMenu',
+		'webphone'
+	]
+};
+
+/**
+ * The Submodules of `app` bundled into main.js and loaded at start.
+ * @param  {String} app
+ * @return {String[]}  The App's eager core; empty for an App that loads all
+ *                     its Submodules at start
+ */
+export const getEagerSubmodules = app => eagerCores[app] || [];
+
+/**
+ * The Submodules of `app` built as their own chunk, each loaded on its first
+ * publish.
+ * @param  {String} root  Directory holding `apps/`
+ * @param  {String} app
+ * @return {String[]}  Submodules of `app` that load on first publish
+ */
+export const getLazySubmodules = (root, app) => eagerCores.hasOwnProperty(app)
+	? listSubmodules(root, app).filter(submodule => !eagerCores[app].includes(submodule))
+	: [];
+
+/**
+ * `lazySubModules` for build-config.json: per App with lazy Submodules, each
+ * topic -> the Submodule whose stub loads on it, read from the sources.
+ * @param  {String} root  Directory holding `apps/`
+ * @return {Object}
+ */
+export const getLazySubmoduleTopics = root => Object.keys(eagerCores)
+	.filter(app => getAppsToInclude().includes(app))
+	.reduce((acc, app) => {
+		const read = names => names.reduce((sources, submodule) => Object.assign(sources, {
+			[submodule]: fs.readFileSync(join(root, 'apps', app, 'submodules', submodule, `${submodule}.js`), 'utf8')
+		}), {});
+		return Object.assign(acc, {
+			[app]: lazyTopicMap({
+				app,
+				sources: read(getLazySubmodules(root, app)),
+				eagerSources: read(getEagerSubmodules(app).filter(submodule => listSubmodules(root, app).includes(submodule)))
+			})
+		});
+	}, {});
 
 export const mode = env.app && env.app.length ? 'app' : 'whole';
 
